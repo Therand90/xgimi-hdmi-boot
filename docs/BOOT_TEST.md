@@ -1,6 +1,8 @@
-# v1.2-rc2 experimental boot-recovery test
+# v1.2-rc3 experimental boot-recovery test
 
 **Not a public release.** The v1.1 release is unchanged.
+
+On the original Horizon XK03H (Android TV 11 / RT.3.24.327), the optional Accessibility helper has now **survived a full reboot** and restarted WakeService automatically, with the projector returning to HDMI 2. The next test reduces the full-boot switching delay from 15 s to 6 s. Remote standby/wake still uses 4 s.
 
 This branch experiments with an **optional Accessibility service** to bootstrap `WakeService` on XGIMI Android TV 11 firmware that marks user apps `stopped=true` after a full reboot.
 
@@ -18,7 +20,7 @@ git pull --ff-only
 ./INSTALL.sh PROJECTOR_IP:5555
 ```
 
-The expected APK is **1.2-rc2 (versionCode 4)**.
+The expected APK is **1.2-rc3 (versionCode 5)**.
 
 ## Enable Accessibility when the Android TV settings screen is missing
 
@@ -72,6 +74,6 @@ adb -s "$D" logcat -d -t 1000 -s XgimiHdmiBoot:I '*:S'
 
 Only if Android rebinds the helper and restores `WakeService`, verify subsequent normal remote standby/wake without opening the app. **Do not merge or call this fixed** without both tests on an original Horizon XK03H.
 
-## UI changes in rc2
+## UI changes in rc3
 
 The on-projector screen is now scrollable with one enable/disable button and permission status labels. Removed: the manual HDMI test, the delayed test, the broken Accessibility Settings shortcut, and the superposition Settings shortcut. Permission management stays in the Linux/ADB guide.
