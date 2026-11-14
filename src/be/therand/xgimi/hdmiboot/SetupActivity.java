@@ -1,15 +1,16 @@
 package be.therand.xgimi.hdmiboot;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,114 +20,115 @@ public final class SetupActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(Color.rgb(20, 23, 29));
+
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER_VERTICAL);
-        root.setPadding(48, 32, 48, 32);
-        root.setBackgroundColor(Color.rgb(20, 23, 29));
-        setContentView(root);
-        addText("XGIMI HDMI Boot", 30, Color.WHITE);
-        addText("Horizon XK03H  |  Firmware RT.3.24.327  |  HDMI 2", 18, 0xffdddddd);
-        addText("HDMI 2 au reveil. Pour recuperer apres reboot, activer le service Accessibilite optionnel. ARC/CEC inchanges.", 18, 0xffcccccc);
-        addText("Service d ecoute : " + (isEnabled() ? "ACTIVE" : "DESACTIVE"), 18, 0xffdddddd);
-        addText("Autorisation de superposition : " +
-            (Settings.canDrawOverlays(this) ? "OK" : "NON ACCORDEE"),
-            20, Settings.canDrawOverlays(this) ? 0xff99dd99 : 0xffffbf77);
+        root.setPadding(40, 16, 40, 16);
+        scroll.addView(root);
+        setContentView(scroll);
 
-        if (isEnabled()) {
-            try { WakeService.start(this); }
-            catch (RuntimeException e) { android.util.Log.e(HdmiSwitch.TAG, "Service non demarre", e); }
-        }
-        addButton("Activer le HDMI 2 automatique", new View.OnClickListener() {
+        // Opening the app manually also recovers wake listening in v1.x.
+        if (isEnabled()) startWakeService();
+        render();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (root != null) render();
+    }
+
+    private void render() {
+        root.removeAllViews();
+
+        addText("XGIMI HDMI Boot", 28, Color.WHITE);
+        addText("Horizon XK03H  |  HDMI 2", 17, 0xffdddddd);
+
+        final boolean enabled = isEnabled();
+        addText("Commutation au reveil : " + (enabled ? "ACTIVEE" : "DESACTIVEE"),
+            18, enabled ? 0xff99dd99 : 0xffffbf77);
+
+        boolean overlay = Settings.canDrawOverlays(this);
+        addText("Autorisation de superposition : " + (overlay ? "OK" : "A CONFIGURER"),
+            16, overlay ? 0xff99dd99 : 0xffffbf77);
+
+        boolean bootHelper = isBootHelperEnabled();
+        addText("Demarrage apres reboot : " +
+                (bootHelper ? "ACCESSIBILITE ACTIVEE" : "ACCESSIBILITE NON ACTIVEE"),
+            16, bootHelper ? 0xff99dd99 : 0xffffbf77);
+
+        Button toggle = new Button(this);
+        toggle.setText(enabled ? "Desactiver HDMI 2 automatique" : "Activer HDMI 2 automatique");
+        toggle.setAllCaps(false);
+        toggle.setTextSize(18);
+        toggle.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View view) {
-                getSharedPreferences("config", MODE_PRIVATE).edit().putBoolean("enabled", true).apply();
-                try {
-                    WakeService.start(SetupActivity.this);
-                    Toast.makeText(SetupActivity.this, "Surveillance du reveil activee", Toast.LENGTH_LONG).show();
-                } catch (RuntimeException e) {
-                    android.util.Log.e(HdmiSwitch.TAG, "Echec lancement service", e);
-                    Toast.makeText(SetupActivity.this, "Echec : voir les logs", Toast.LENGTH_LONG).show();
+                boolean next = !isEnabled();
+                getSharedPreferences("config", MODE_PRIVATE)
+                    .edit().putBoolean("enabled", next).apply();
+                if (next) {
+                    startWakeService();
+                    Toast.makeText(SetupActivity.this, "HDMI 2 automatique active",
+                        Toast.LENGTH_SHORT).show();
+                } else {
+                    SwitchReceiver.cancel(SetupActivity.this);
+                    stopService(new Intent(SetupActivity.this, WakeService.class));
+                    Toast.makeText(SetupActivity.this, "HDMI 2 automatique desactive",
+                        Toast.LENGTH_SHORT).show();
                 }
+                render();
             }
         });
-        addButton("Desactiver le HDMI 2 automatique", new View.OnClickListener() {
-            @Override public void onClick(View view) {
-                getSharedPreferences("config", MODE_PRIVATE).edit().putBoolean("enabled", false).apply();
-                SwitchReceiver.cancel(SetupActivity.this);
-                stopService(new Intent(SetupActivity.this, WakeService.class));
-                Toast.makeText(SetupActivity.this, "Automatisation desactivee", Toast.LENGTH_LONG).show();
-            }
-        });
-        addButton("Tester HDMI 2 maintenant", new View.OnClickListener() {
-            @Override public void onClick(View view) {
-                if (!HdmiSwitch.openHdmi2(SetupActivity.this)) {
-                    Toast.makeText(SetupActivity.this, "Echec : voir adb logcat", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
-        addButton("Tester le demarrage automatique dans 15 s", new View.OnClickListener() {
-            @Override public void onClick(View view) {
-                if (!Settings.canDrawOverlays(SetupActivity.this)) {
-                    Toast.makeText(SetupActivity.this,
-                        "Autoriser d'abord la superposition (ADB ou parametres)", Toast.LENGTH_LONG).show();
-                    return;
-                }
-                SwitchReceiver.schedule(SetupActivity.this, 15000);
-                Intent home = new Intent(Intent.ACTION_MAIN);
-                home.addCategory(Intent.CATEGORY_HOME);
-                home.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(home);
-                finish();
-            }
-        });
-        addButton("Demarrage automatique (Accessibilite)", new View.OnClickListener() {
-            @Override public void onClick(View view) {
-                try {
-                    startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
-                } catch (Exception e) {
-                    Toast.makeText(SetupActivity.this,
-                        "Menu Accessibilite indisponible", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
-        addText("Autoriser seulement XGIMI HDMI Boot (autostart). Ce service ne lit pas l'ecran ni les interactions.", 14, 0xffcccccc);
-        addButton("Ouvrir l'autorisation de superposition", new View.OnClickListener() {
-            @Override public void onClick(View view) {
-                Intent settings = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
-                try {
-                    startActivity(settings);
-                } catch (Exception e) {
-                    Toast.makeText(SetupActivity.this,
-                        "Menu absent sur ce TV : autorisation possible via ADB", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
+        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT);
+        buttonParams.topMargin = 14;
+        root.addView(toggle, buttonParams);
+
+        addText("Sur ce firmware, l'activation du demarrage apres reboot se fait une seule fois via ADB. Voir le README du projet.",
+            14, 0xffbbbbbb);
     }
 
     private boolean isEnabled() {
         return getSharedPreferences("config", MODE_PRIVATE).getBoolean("enabled", true);
     }
 
-    private void addText(String message, int sizeSp, int color) {
-        TextView label = new TextView(this);
-        label.setText(message);
-        label.setTextSize(sizeSp);
-        label.setTextColor(color);
-        label.setPadding(0, 10, 0, 10);
-        root.addView(label);
+    private boolean isBootHelperEnabled() {
+        try {
+            String list = Settings.Secure.getString(getContentResolver(),
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            String prefix = getPackageName() + "/";
+            return list != null && (
+                (":" + list + ":").contains(":" + prefix +
+                    "be.therand.xgimi.hdmiboot.BootAccessibilityService:")
+                || (":" + list + ":").contains(":" + prefix +
+                    ".BootAccessibilityService:")
+            );
+        } catch (Exception e) {
+            return false;
+        }
     }
 
-    private void addButton(String caption, View.OnClickListener onClick) {
-        Button button = new Button(this);
-        button.setText(caption);
-        button.setAllCaps(false);
-        button.setTextSize(18);
-        button.setOnClickListener(onClick);
-        LinearLayout.LayoutParams params =
-            new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.topMargin = 10;
-        root.addView(button, params);
+    private void startWakeService() {
+        try {
+            WakeService.start(this);
+        } catch (RuntimeException e) {
+            android.util.Log.e(HdmiSwitch.TAG, "Service non demarre", e);
+            Toast.makeText(this, "Impossible de lancer le service HDMI", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void addText(String message, int sizeSp, int color) {
+        TextView text = new TextView(this);
+        text.setText(message);
+        text.setTextSize(sizeSp);
+        text.setTextColor(color);
+        text.setPadding(0, 8, 0, 8);
+        root.addView(text);
     }
 }
