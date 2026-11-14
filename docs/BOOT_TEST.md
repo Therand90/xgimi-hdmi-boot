@@ -1,46 +1,77 @@
-# v1.2-rc1 experimental boot-recovery test
+# v1.2-rc2 experimental boot-recovery test
 
-**Not a public release.** Only tested version 1.1's wake handler has been confirmed on the original Horizon.
+**Not a public release.** The v1.1 release is unchanged.
 
-This branch adds an **optional Accessibility service** to bootstrap `WakeService` on XGIMI Android 11 builds that mark user-installed apps `stopped=true` during startup. The service does not request accessibility events, read windows or perform gestures. Nevertheless, Accessibility is a powerful Android permission; enable it only if you trust the code. No user-facing accessibility features depend on it.
+This branch experiments with an **optional Accessibility service** to bootstrap `WakeService` on XGIMI Android TV 11 firmware that marks user apps `stopped=true` after a full reboot.
 
-## Upgrading an existing local installation
+The Accessibility service requests **no events**, does not read window contents, and does not perform gestures. Nonetheless, Accessibility is a sensitive Android capability. Enable it only if you trust the application.
 
-The APK version is 1.2-rc1 (versionCode 3). To install over your existing APK, use **the same local .signing directory**, never a new signing key. Preserve your original folder:
+## Installation without changing your signing identity
+
+Use your existing GitHub checkout and **keep its existing `.signing/` directory**. If you built v1.1 from a separate source folder, copy the original `.signing/` directory into this checkout *before* building. Do not uninstall v1.1 or make a new signing key accidentally.
 
 ```bash
-# Run from the GitHub working tree after checking out this branch:
-# Only copy your old .signing directory if you trust its origin.
-cp -a "$HOME/Téléchargements/XGIMI-HDMI-Boot/.signing" ./.signing
+cd ~/Téléchargements/xgimi-hdmi-boot
+git fetch origin
+git switch fix/boot-accessibility-bootstrap
+git pull --ff-only
 ./INSTALL.sh PROJECTOR_IP:5555
 ```
 
-If you don't have the original key, stop; don't uninstall the working v1.1 just to run this experiment.
+The expected APK is **1.2-rc2 (versionCode 4)**.
 
-## Opt-in configuration
+## Enable Accessibility when the Android TV settings screen is missing
 
-On the projector, open XGIMI HDMI Boot and use **Autoriser le démarrage automatique (Accessibilité)**. Enable only **XGIMI HDMI Boot (autostart)** in system Accessibility settings. It may be necessary to use ADB if XGIMI hides that screen; do not overwrite other accessibility services. The normal overlay permission must also remain enabled. The app's boot helper is optional, so v1.1 behavior remains available without it.
+On some XGIMI firmware, Android has no Activity which handles `Settings.ACTION_ACCESSIBILITY_SETTINGS`. It is therefore **not available from the app UI**. The experimental build shows a readable status instead.
 
-Before reboot, verify `dumpsys accessibility` says the boot helper is **Bound** rather than merely **Binding**, and that `WakeService` is running.
+From Ubuntu, explicitly opt in through ADB:
 
-## Full reboot test
+```bash
+bash tools/accessibility.sh PROJECTOR_IP:5555 enable
+```
 
-Record before, then run a full reboot:
+This preserves other accessibility services already enabled on the device, and activates only `be.therand.xgimi.hdmiboot/.BootAccessibilityService`.
+
+To withdraw that permission later:
+
+```bash
+bash tools/accessibility.sh PROJECTOR_IP:5555 disable
+```
+
+The script never changes HDMI-CEC or ARC. The overlay permission must also remain granted.
+
+## Verify service binding **before** reboot
+
+```bash
+D=PROJECTOR_IP:5555
+adb -s "$D" shell settings get secure enabled_accessibility_services
+adb -s "$D" shell dumpsys accessibility | grep -iE 'BootAccessibilityService|Bound services|Binding services'
+adb -s "$D" shell dumpsys activity services be.therand.xgimi.hdmiboot | grep -E 'WakeService|isForeground'
+adb -s "$D" logcat -d -t 1000 -s XgimiHdmiBoot:I '*:S'
+```
+
+Look for `Accessibility helper connected` and `WakeService` active. Merely seeing the service name in secure settings is **not proof** that Android has bound it.
+
+## Test the actual reboot and normal standby
 
 ```bash
 adb -s PROJECTOR_IP:5555 reboot
 ```
 
-After reconnecting, **do not open the app manually**:
+After reconnection, **do not open the app manually**:
 
 ```bash
 D=PROJECTOR_IP:5555
 PKG=be.therand.xgimi.hdmiboot
 adb connect "$D"
 adb -s "$D" shell dumpsys package "$PKG" | grep 'User 0:'
-adb -s "$D" shell dumpsys accessibility | grep -i -A 8 'Bound services'
+adb -s "$D" shell dumpsys accessibility | grep -iE 'BootAccessibilityService|Bound services|Binding services'
 adb -s "$D" shell dumpsys activity services "$PKG" | grep -E 'WakeService|isForeground'
-adb -s "$D" logcat -d -t 3000 -s XgimiHdmiBoot:I '*:S'
+adb -s "$D" logcat -d -t 1000 -s XgimiHdmiBoot:I '*:S'
 ```
 
-Expected: helper connects and wakes the foreground service automatically. Test **again** after a power-button standby/wake without launching the app. Only then consider merging into `main`. If the service does not bind while `stopped=true`, this firmware also blocks the fallback and we should not merge or call it fixed.
+Only if Android rebinds the helper and restores `WakeService`, verify subsequent normal remote standby/wake without opening the app. **Do not merge or call this fixed** without both tests on an original Horizon XK03H.
+
+## UI changes in rc2
+
+The on-projector screen is now scrollable with one enable/disable button and permission status labels. Removed: the manual HDMI test, the delayed test, the broken Accessibility Settings shortcut, and the superposition Settings shortcut. Permission management stays in the Linux/ADB guide.
