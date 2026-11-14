@@ -90,8 +90,14 @@ public final class SetupActivity extends Activity {
         buttonParams.topMargin = 14;
         root.addView(toggle, buttonParams);
 
-        addText("Sur ce firmware, l'activation du demarrage apres reboot se fait une seule fois via ADB. Voir le README du projet.",
+        addText(bootHelper
+                ? "Demarrage apres reboot configure. Vous pouvez fermer cette application."
+                : "Pour activer le demarrage apres reboot avec la telecommande : Parametres > Preferences relatives a l'appareil > Accessibilite > XGIMI HDMI Boot (autostart) > Activer.",
             14, 0xffbbbbbb);
+        if (!overlay) {
+            addText("L'autorisation 'Afficher par-dessus les autres applications' manque. Elle est indispensable a cette version pour commuter depuis l'arriere-plan.",
+                14, 0xffffbf77);
+        }
     }
 
     private boolean isEnabled() {
