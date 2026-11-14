@@ -1,90 +1,65 @@
 # XGIMI HDMI Boot
 
-**Automatically switch an XGIMI Horizon projector to HDMI 2 on wake or boot, without replacing the Android TV launcher.**
+[Français](README.fr.md) · [Download APK v1.1](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.1)
 
-[Version française](README.fr.md)
+**Automatically select HDMI 2 on the original XGIMI Horizon without replacing the Android TV launcher.**
 
-**[Download the signed v1.1 APK](https://github.com/Therand90/xgimi-hdmi-boot/releases/download/v1.1/XGIMI-HDMI-Boot.apk)** · [Release notes](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.1)
+## Features
 
+- Opens the projector's native HDMI 2 input when waking from standby.
+- Uses the XGIMI HDMI input application; no root, Tasker or alternative launcher.
+- Does not change HDMI-CEC or HDMI ARC settings.
+- Provides an on-device enable/disable switch and a manual HDMI 2 test.
 
-## Why?
+## Compatibility
 
-The original XGIMI Horizon may suggest switching to the HDMI/ARC sound system connected to HDMI 1, even when the actual video source is connected to HDMI 2. This small Android TV app opens the native XGIMI HDMI 2 input using the TV input passthrough URI, without using Projectivy Launcher, Tasker, root, or simulated remote-control clicks.
+| Item | Tested configuration |
+| --- | --- |
+| Projector | XGIMI Horizon (original Full HD model, XK03H) |
+| Android TV | 11 |
+| Firmware | RT.3.24.327 |
+| Input | HDMI 2 (`Hdmi2TvInputService/HW2`) |
 
-## Confirmed working
+Other XGIMI models and firmware versions have not been tested. This app uses a model-specific HDMI input identifier.
 
-- **Device tested:** XGIMI Horizon XK03H (original Full HD model)
-- **Android TV:** 11
-- **Firmware:** RT.3.24.327
-- **Version:** 1.1
-- **Real-world result:** after power off/on with the projector's remote, the projector automatically switches to HDMI 2. HDMI 1 source suggestion no longer appears in the tested setup. HDMI ARC/CEC continues functioning.
+**Known limitation in v1.1:** automatic recovery after a complete Android reboot is unreliable on the tested projector. The wake-from-standby functionality was confirmed **after the app's service had been started**, but a later full reboot left the service inactive. Opening the app again restores service startup. A fix is being investigated. Do not rely on v1.1 for unattended startup after a power interruption.
 
-**Important:** Only the wake-from-standby path has been confirmed end-to-end on this firmware. The `BOOT_COMPLETED` full-Android-reboot path is implemented, but not independently confirmed. Other XGIMI models and firmware builds may use different HDMI input IDs or impose different background-launch restrictions.
+## Install the APK
 
-## How it works
+1. [Download the signed APK](https://github.com/Therand90/xgimi-hdmi-boot/releases/download/v1.1/XGIMI-HDMI-Boot.apk) from the **v1.1 release**.
+2. Sideload it on the projector using a compatible Android TV file manager or ADB.
+3. Open **XGIMI HDMI Boot** on the projector at least once and select **Enable automatic HDMI 2**.
+4. Grant the **Display over other apps** permission, if offered by Android TV. On some firmware versions this setting is hidden; see the ADB alternative below.
+5. Check **Test HDMI 2 now**, then put the projector in standby and wake it using the remote.
 
-- A small foreground Android service listens for `ACTION_SCREEN_ON` and `ACTION_SCREEN_OFF`.
-- On screen on, it schedules the HDMI 2 launch after **4 seconds**.
-- On screen off, it cancels pending switches.
-- After Android `BOOT_COMPLETED`, it attempts an HDMI 2 launch after **15 seconds**.
-- It launches the manufacturer's activity `com.xgimi.xhplayer/.InputActivity`, with the HDMI 2 passthrough URI:
+A small persistent notification is expected while the wake-detection service runs.
 
-```text
-content://android.media.tv/passthrough/com.xgimi.tvinput%2F.inputservice.Hdmi2TvInputService%2FHW2
-```
+### Optional ADB installation and permission
 
-It does **not** disable HDMI-CEC or ARC, and does **not** require network access on the projector. The foreground service displays a persistent notification while enabled.
-
-## Build and install from Ubuntu/Linux
-
-You need an Ubuntu/Linux PC with `adb`, Java JDK (17 or later), `curl`, `zip`, `unzip`, `openssl`, and `keytool`. The installation script downloads the official Android command-line tools / SDK when absent.
-
-```bash
-sudo apt update
-sudo apt install -y adb openjdk-17-jdk-headless curl zip unzip openssl
-
-git clone https://github.com/Therand90/xgimi-hdmi-boot.git
-cd xgimi-hdmi-boot
-chmod +x INSTALL.sh
-./INSTALL.sh PROJECTOR_IP:5555
-```
-
-Replace `PROJECTOR_IP` with the address of your projector. Enable and authorize ADB debugging on the projector beforehand. 
-
-For local build only:
-
-```bash
-./INSTALL.sh --build-only
-```
-
-After installation, open **XGIMI HDMI Boot** once on the projector and leave the automation enabled. This first launch is important: Android excludes force-stopped applications from boot events. The installer tries to grant the overlay app-op using ADB; on other systems, grant it manually if needed. Use the app's **Test HDMI 2 now** button first, then test powering off/on using the normal remote control.
-
-### Diagnose
+Enable and authorize Android debugging on the projector. Replace `PROJECTOR_IP` with its LAN IP address:
 
 ```bash
 adb connect PROJECTOR_IP:5555
+adb -s PROJECTOR_IP:5555 install --no-incremental -r XGIMI-HDMI-Boot.apk
+adb -s PROJECTOR_IP:5555 shell appops set be.therand.xgimi.hdmiboot SYSTEM_ALERT_WINDOW allow
+```
+
+The projector must support ADB over TCP for this example. The app itself does **not** need a network connection after installation.
+
+## Troubleshooting
+
+If wake switching stops working after a full reboot, open **XGIMI HDMI Boot** again on the projector to restart its wake-detection service (v1.1 known issue). Ensure automation remains enabled and the overlay permission is granted.
+
+For diagnostic logs:
+
+```bash
 adb -s PROJECTOR_IP:5555 logcat -d -s XgimiHdmiBoot:I ActivityTaskManager:W
 ```
 
-If no automatic switching occurs, check that the service is running, overlay permission is granted, and `SCREEN_ON` is logged after a remote wake.
+## Build from source
 
-### Signing key / updating
+Developers can follow [Build and development](docs/DEVELOPMENT.md). Building locally generates a **different signing key**; a locally signed APK cannot update the official release APK without uninstalling it first.
 
-The installer **generates a local signing key** in `.signing/` and uses it for future updates. **Back it up safely and never commit or share it.** Keep the same `.signing/` directory when updating from version 1.0 or 1.1: APKs signed with different keys cannot update an existing installation. `.gitignore` excludes `.signing/` and generated `.apk` files.
+## License and disclaimer
 
-### Uninstall
-
-```bash
-adb -s PROJECTOR_IP:5555 uninstall be.therand.xgimi.hdmiboot
-```
-
-## Compatibility and limitations
-
-- The HDMI input URI is hard-coded for the **original Horizon's HDMI 2 input**. Other models require verification with `adb shell dumpsys tv_input` and may need code changes.
-- Android's background activity restrictions and vendor battery management can prevent automatic switching on other devices.
-- A foreground-service notification is expected. This application does not monitor or modify the HDMI-CEC state.
-- This is an independent community project, not affiliated with XGIMI.
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+[MIT](LICENSE). Independent community project; not affiliated with or endorsed by XGIMI.
