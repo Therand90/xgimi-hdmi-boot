@@ -1,4 +1,4 @@
-# v1.2-rc5 experimental boot-recovery test
+# v1.2-rc6 experimental boot-recovery test
 
 **Not a public release.** The v1.1 release is unchanged.
 
@@ -20,7 +20,7 @@ git pull --ff-only
 ./INSTALL.sh PROJECTOR_IP:5555
 ```
 
-The expected APK is **1.2-rc5 (versionCode 7)**.
+The expected APK is **1.2-rc6 (versionCode 8)**.
 
 ## Enable Accessibility from the XGIMI remote — verified on Horizon XK03H
 
@@ -82,6 +82,6 @@ adb -s "$D" logcat -d -t 1000 -s XgimiHdmiBoot:I '*:S'
 
 Only if Android rebinds the helper and restores `WakeService`, verify subsequent normal remote standby/wake without opening the app. **Do not merge or call this fixed** without both tests on an original Horizon XK03H.
 
-## UI changes in rc5
+## UI changes in rc6
 
-The on-projector screen is scrollable, with the automation toggle, a restored **Manage overlay permission** button, permission status labels, and remote-control Accessibility menu directions when the boot helper is disabled. The overlay shortcut uses the standard Android intent with an app-details fallback; whether that shortcut visibly opens on XK03H still needs on-device confirmation. Unnecessary manual/delayed HDMI diagnostic buttons and the broken Accessibility shortcut remain removed. Both Accessibility and Overlay permissions have system menus accessible manually with the remote on this model; only Accessibility has been tested for enable/disable through the remote. The ADB installer grants Overlay automatically, so a fresh install without ADB has not yet been validated.
+The on-projector screen is scrollable, with a short Accessibility setup instruction displayed only if it is not enabled, the automation toggle, a restored **Manage overlay permission** button, permission status labels, and remote-control Accessibility menu directions when the boot helper is disabled. The overlay shortcut uses the standard Android intent with an app-details fallback; whether that shortcut visibly opens on XK03H still needs on-device confirmation. Unnecessary manual/delayed HDMI diagnostic buttons and the broken Accessibility shortcut remain removed. Both Accessibility and Overlay permissions have system menus accessible manually with the remote on this model; only Accessibility has been tested for enable/disable through the remote. The ADB installer grants Overlay automatically, so a fresh install without ADB has not yet been validated.
