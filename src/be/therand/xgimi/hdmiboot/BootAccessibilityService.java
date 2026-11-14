@@ -24,7 +24,7 @@ public final class BootAccessibilityService extends AccessibilityService {
             WakeService.start(this);
             PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
             if (pm != null && pm.isInteractive()) {
-                SwitchReceiver.schedule(this, 15000);
+                SwitchReceiver.schedule(this, 6000);
             } else {
                 Log.i(HdmiSwitch.TAG, "Accessibility helper: screen not interactive; no HDMI switch now");
             }
