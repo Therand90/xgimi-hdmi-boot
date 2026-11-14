@@ -27,7 +27,7 @@ public final class SetupActivity extends Activity {
         setContentView(root);
         addText("XGIMI HDMI Boot", 30, Color.WHITE);
         addText("Horizon XK03H  |  Firmware RT.3.24.327  |  HDMI 2", 18, 0xffdddddd);
-        addText("Demarrage complet ET sortie de veille (telecommande). ARC/CEC inchanges.", 18, 0xffcccccc);
+        addText("HDMI 2 au reveil. Pour recuperer apres reboot, activer le service Accessibilite optionnel. ARC/CEC inchanges.", 18, 0xffcccccc);
         addText("Service d ecoute : " + (isEnabled() ? "ACTIVE" : "DESACTIVE"), 18, 0xffdddddd);
         addText("Autorisation de superposition : " +
             (Settings.canDrawOverlays(this) ? "OK" : "NON ACCORDEE"),
@@ -79,6 +79,17 @@ public final class SetupActivity extends Activity {
                 finish();
             }
         });
+        addButton("Demarrage automatique (Accessibilite)", new View.OnClickListener() {
+            @Override public void onClick(View view) {
+                try {
+                    startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+                } catch (Exception e) {
+                    Toast.makeText(SetupActivity.this,
+                        "Menu Accessibilite indisponible", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        addText("Autoriser seulement XGIMI HDMI Boot (autostart). Ce service ne lit pas l'ecran ni les interactions.", 14, 0xffcccccc);
         addButton("Ouvrir l'autorisation de superposition", new View.OnClickListener() {
             @Override public void onClick(View view) {
                 Intent settings = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
