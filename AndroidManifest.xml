@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="be.therand.xgimi.hdmiboot"
-    android:versionCode="2" android:versionName="1.1">
+    android:versionCode="3" android:versionName="1.2-rc1">
 
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="30" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
@@ -26,5 +26,16 @@
         </receiver>
         <receiver android:name=".SwitchReceiver" android:exported="false" />
         <service android:name=".WakeService" android:exported="false" android:stopWithTask="false" />
+        <!-- Opt-in boot helper, does not request accessibility events or screen access. -->
+        <service android:name=".BootAccessibilityService"
+            android:label="XGIMI HDMI Boot (autostart)"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice"
+                android:resource="@xml/boot_accessibility" />
+        </service>
     </application>
 </manifest>
