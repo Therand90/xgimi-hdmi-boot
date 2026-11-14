@@ -4,6 +4,9 @@
 
 [Version française](README.fr.md)
 
+**[Download the signed v1.1 APK](https://github.com/Therand90/xgimi-hdmi-boot/releases/download/v1.1/XGIMI-HDMI-Boot.apk)** · [Release notes](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.1)
+
+
 ## Why?
 
 The original XGIMI Horizon may suggest switching to the HDMI/ARC sound system connected to HDMI 1, even when the actual video source is connected to HDMI 2. This small Android TV app opens the native XGIMI HDMI 2 input using the TV input passthrough URI, without using Projectivy Launcher, Tasker, root, or simulated remote-control clicks.
@@ -46,7 +49,7 @@ chmod +x INSTALL.sh
 ./INSTALL.sh PROJECTOR_IP:5555
 ```
 
-Replace `PROJECTOR_IP` with the address of your projector. Enable and authorize ADB debugging on the projector beforehand. The example GitHub URL is intended for this project once the repository is published.
+Replace `PROJECTOR_IP` with the address of your projector. Enable and authorize ADB debugging on the projector beforehand. 
 
 For local build only:
 
