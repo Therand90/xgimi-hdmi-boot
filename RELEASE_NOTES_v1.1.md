@@ -6,17 +6,17 @@ First public release of a small Android TV utility that switches the original XG
 - XGIMI Horizon XK03H (original Full HD model)
 - Android TV 11, firmware RT.3.24.327
 - HDMI 1 connected to an ARC home-cinema system, HDMI 2 used for video
-- Remote-control standby/wake tested successfully: HDMI 2 is selected automatically and the unwanted HDMI 1 switch prompt no longer appears in this setup
+- Remote-control standby/wake succeeded **after the app service was manually started**: HDMI 2 was selected and the unwanted HDMI 1 prompt did not appear in this setup
 
 ### What's included
 - HDMI 2 switching 4 seconds after screen-on using a lightweight foreground service
 - Cancels pending switching on screen-off
-- `BOOT_COMPLETED` handling with a 15-second delay (**implemented, but full cold-boot behavior has not been independently validated**)
+- `BOOT_COMPLETED` handling with a 15-second delay (**known issue: service may fail to restart after a full Android reboot; subsequent wake switching can also stop until the app is opened again**)
 - Manual HDMI 2 test and enable/disable controls
 - Does not disable or modify HDMI-CEC / ARC
 
 ### Installation
-Download `XGIMI-HDMI-Boot.apk` from this release and sideload it onto the projector. Open the application once, enable the automation, and grant the Android overlay permission (on the tested Horizon firmware it can be allowed via ADB):
+Download `XGIMI-HDMI-Boot.apk` from this release and sideload it onto the projector. Open the application, enable the automation, and grant the Android overlay permission (on the tested Horizon firmware it can be allowed via ADB):
 
 ```bash
 adb connect PROJECTOR_IP:5555
@@ -25,6 +25,9 @@ adb -s PROJECTOR_IP:5555 shell appops set be.therand.xgimi.hdmiboot SYSTEM_ALERT
 ```
 
 ADB debugging must be enabled and approved on the projector. Follow the [README](https://github.com/Therand90/xgimi-hdmi-boot/blob/main/README.md) for detailed instructions and source builds.
+
+### Known issue (v1.1)
+A full Android reboot on the tested Horizon left the wake-detection service inactive. Reopen **XGIMI HDMI Boot** on the projector to restart the service. The automatic boot path is **not currently reliable**. See the [tracking issue](https://github.com/Therand90/xgimi-hdmi-boot/issues/1).
 
 ### Compatibility notes
 This APK is designed for the original Horizon's HDMI 2 identifier, `com.xgimi.tvinput/.inputservice.Hdmi2TvInputService/HW2`. Other models and firmware versions are untested. Android firmware restrictions may prevent background launch on other devices.
