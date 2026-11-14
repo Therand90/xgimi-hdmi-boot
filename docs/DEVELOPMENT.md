@@ -1,10 +1,10 @@
 # Development and local builds
 
-This page documents source builds and diagnostics. Most users should install the [signed release APK](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.1).
+Most users should install the [signed v1.2 release APK](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.2). This page covers development, signing, diagnostics, and release maintenance.
 
 ## Prerequisites
 
-Linux/Ubuntu, Java JDK 17 or later, ADB, curl, zip, unzip and OpenSSL. The installer downloads Android SDK command-line tools if needed.
+Ubuntu/Linux, Java JDK 17+, ADB (only for device installation), curl, zip, unzip and OpenSSL. The build script downloads official Android SDK tools when needed.
 
 ```bash
 sudo apt update
@@ -15,48 +15,59 @@ cd xgimi-hdmi-boot
 ./INSTALL.sh --build-only
 ```
 
-To compile, install and open the app over ADB:
+To install and open the locally signed APK on your own projector:
 
 ```bash
 ./INSTALL.sh PROJECTOR_IP:5555
 ```
 
-**Signing:** the installer creates `.signing/release.jks` and `.signing/password` on the local machine. Keep those files private and backed up. Each independent local build using a fresh key cannot update an APK signed with another key, including the official published release. CI only verifies compilation and uses a temporary key; **CI APKs are not distributable updates**.
+**Signing:** `INSTALL.sh` stores its private signing key in `.signing/release.jks` and its password in `.signing/password`. These are kept local and ignored by Git. New developer keys **cannot update the official release APK**. GitHub Actions uses a temporary key to verify compilation, so its APK **must never be published as a compatible update**.
 
 ## Android implementation
 
-- `BootReceiver`: listens for `BOOT_COMPLETED` and attempts to start `WakeService`, then schedules a 15-second input switch.
-- `WakeService`: a foreground service that dynamically registers for `SCREEN_ON` and `SCREEN_OFF`.
-- `SwitchReceiver`: uses `AlarmManager` for delayed switching and checks the overlay permission.
-- `HdmiSwitch`: opens `com.xgimi.xhplayer/.InputActivity` with the HDMI 2 TV passthrough URI:
+- `BootReceiver`: listens for `BOOT_COMPLETED`, starts `WakeService`, then schedules an HDMI switch after **6 seconds** (fallback path; XGIMI may stop the app during boot).
+- `BootAccessibilityService`: opt-in helper to restart `WakeService` when XGIMI firmware places third-party apps in `stopped=true` at boot. Requires explicit user enablement from **Settings → Device Preferences → Accessibility**. It requests no Accessibility events, window content or gestures. If the projector is interactive at connection, it schedules HDMI 2 after **6 seconds**.
+- `WakeService`: foreground service, dynamically receives `SCREEN_ON` and `SCREEN_OFF`. On screen-on it schedules HDMI 2 after **4 seconds**; screen-off cancels pending switches.
+- `SwitchReceiver`: uses `AlarmManager` and checks overlay permission for starting the HDMI 2 Activity from background.
+- `HdmiSwitch`: opens `com.xgimi.xhplayer/.InputActivity` with native passthrough URI:
 
 ```text
 content://android.media.tv/passthrough/com.xgimi.tvinput%2F.inputservice.Hdmi2TvInputService%2FHW2
 ```
 
-### Diagnostics
+The Accessibility permission, which is broad on Android, is fully opt-in. The project requests no screen reading or gesture control.
+
+## Diagnosing device state
 
 ```bash
 D=PROJECTOR_IP:5555
 PKG=be.therand.xgimi.hdmiboot
 
 adb connect "$D"
-adb -s "$D" shell getprop sys.boot_completed
 adb -s "$D" shell dumpsys package "$PKG" | grep 'User 0:'
-adb -s "$D" shell dumpsys activity services "$PKG"
-adb -s "$D" logcat -d -b all | grep -iE 'XgimiHdmiBoot|WakeService|BootReceiver|ForegroundService'
+adb -s "$D" shell dumpsys accessibility | grep -iE 'BootAccessibilityService|Bound services'
+adb -s "$D" shell dumpsys activity services "$PKG" | grep -E 'WakeService|isForeground'
+adb -s "$D" logcat -d -t 1000 -s XgimiHdmiBoot:I '*:S'
 ```
 
-When working on cold-boot handling, do not confuse `adb reboot` with a projector standby/wake from the remote. Both cases need independent testing.
+A real `adb reboot` and remote standby/wake are different events and should be tested separately. After a full reboot, a successful bootstrap shows `stopped=false`, `Bound services`, and `WakeService` foreground.
 
-## Known issue (v1.1)
+## Releases — maintainer only
 
-A complete Android reboot may leave `WakeService` inactive. Opening `SetupActivity` manually restores service startup, after which HDMI 2 switching on wake has been observed to work. The root cause is not yet confirmed; collect boot logs and service state before changing startup logic. Do not publish a new release as fixed without checking both boot and standby/wake on real hardware.
+**Never upload local `.signing` files to GitHub.** The v1.2 publication helper `PUBLISH_v1.2.sh` must be run **from the maintainer's Ubuntu checkout** containing the original v1.1 signing key, after the changes have been merged to `main` and CI is green.
 
-## Compatibility
+```bash
+git switch main
+git pull --ff-only
+bash PUBLISH_v1.2.sh
+```
 
-Only the original Horizon XK03H running Android TV 11 / RT.3.24.327 has been tested. Other models may expose different TV input identifiers.
+The script refuses a missing key, wrong version, uncommitted changes, a stale `main` branch, or failed CI. It builds the APK locally, downloads the public v1.1 release APK, checks that the signing certificate matches, creates a **draft** v1.2 GitHub release and uploads the APK, verifies the asset, then publishes the release using the maintainer's authenticated `gh` CLI.
 
-## Contributing
+The release APK is **not** the GitHub Actions build. Never circumvent the certificate comparison.
 
-Please include the XGIMI model, firmware, Android version, and relevant logs in issues. Never upload signing keys, private device logs, or home-network addresses.
+## Compatibility and contributing
+
+Tested on the original XGIMI Horizon XK03H, Android TV 11, RT.3.24.327. Other XGIMI models/firmwares may use different HDMI identifiers and system settings.
+
+Include device model, firmware, Android version and redacted logs when filing issues. Do not publish signing keys or personal device/network details.
