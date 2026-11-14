@@ -32,6 +32,9 @@ jobs:
           chmod +x ./INSTALL.sh
           ./INSTALL.sh --build-only
           test -s XGIMI-HDMI-Boot.apk
+      - name: Validate release script syntax
+        run: |
+          bash -n PUBLISH_v1.2.sh
       - name: Check that no signing key is tracked
         run: |
           if git ls-files | grep -E '(^|/)(\.signing/|[^/]+\.(jks|keystore|p12|pem)$)'; then
