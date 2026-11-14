@@ -1,0 +1,55 @@
+package be.therand.xgimi.hdmiboot;
+
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.os.SystemClock;
+import android.provider.Settings;
+import android.util.Log;
+
+public final class SwitchReceiver extends BroadcastReceiver {
+    private static final int REQUEST_CODE = 2;
+
+    static void schedule(Context context, long delayMs) {
+        AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (manager == null) {
+            Log.e(HdmiSwitch.TAG, "AlarmManager introuvable");
+            return;
+        }
+        Intent intent = new Intent(context, SwitchReceiver.class);
+        PendingIntent alarm = PendingIntent.getBroadcast(
+            context, REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        manager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            SystemClock.elapsedRealtime() + delayMs, alarm);
+        Log.i(HdmiSwitch.TAG, "Commutation programmee dans " + (delayMs / 1000) + " s");
+    }
+
+    static void cancel(Context context) {
+        AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (manager == null) return;
+        Intent intent = new Intent(context, SwitchReceiver.class);
+        PendingIntent alarm = PendingIntent.getBroadcast(
+            context, REQUEST_CODE, intent, PendingIntent.FLAG_NO_CREATE);
+        if (alarm != null) {
+            manager.cancel(alarm);
+            alarm.cancel();
+        }
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (!context.getSharedPreferences("config", Context.MODE_PRIVATE)
+                .getBoolean("enabled", true)) {
+            Log.i(HdmiSwitch.TAG, "Commutation ignoree (desactivee)");
+            return;
+        }
+        if (!Settings.canDrawOverlays(context)) {
+            Log.e(HdmiSwitch.TAG,
+                "Acces superposition non autorise; Android peut bloquer l'ouverture depuis le fond");
+            return;
+        }
+        HdmiSwitch.openHdmi2(context);
+    }
+}
