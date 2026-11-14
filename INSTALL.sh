@@ -73,9 +73,19 @@ javac -source 8 -target 8 -Xlint:-options -cp "$PLATFORM" \
   -d "$BUILD/classes" "${SOURCES[@]}"
 (cd "$BUILD/classes" && zip -q -r "$BUILD/classes.jar" .)
 "$TOOLS/d8" --min-api 26 --lib "$PLATFORM" --output "$BUILD/dex" "$BUILD/classes.jar"
+# Compile optional Android XML resources used by the boot helper.
+RESOURCE_ARGS=()
+if [[ -d "$BASE/res" ]]; then
+  mkdir -p "$BUILD/resources"
+  "$TOOLS/aapt2" compile --dir "$BASE/res" -o "$BUILD/resources"
+  while IFS= read -r -d '' file; do
+    RESOURCE_ARGS+=( -R "$file" )
+  done < <(find "$BUILD/resources" -name '*.flat' -print0)
+fi
 "$TOOLS/aapt2" link -I "$PLATFORM" \
   --manifest "$BASE/AndroidManifest.xml" \
   --min-sdk-version 26 --target-sdk-version 30 \
+  "${RESOURCE_ARGS[@]}" \
   -o "$BUILD/unsigned.apk"
 (cd "$BUILD/dex" && zip -q -j "$BUILD/unsigned.apk" classes.dex)
 "$TOOLS/zipalign" -f 4 "$BUILD/unsigned.apk" "$BUILD/aligned.apk"
@@ -136,7 +146,7 @@ Installation terminee.
 1. Sur le projecteur, ouvrir XGIMI HDMI Boot pour activer le service.
 2. Verifier avec ADB que WakeService est actif.
 3. Eteindre puis rallumer avec la telecommande : HDMI 2 doit s ouvrir apres ~4s.
-4. Un redemarrage Android complet doit ouvrir HDMI 2 apres ~15s.
+4. La recuperation apres reboot est experimentale et requiert l activation volontaire du service Accessibilite.
 5. La notification du service est normale : Android impose le service en premier plan.
 
 Logs (depuis Ubuntu) :
