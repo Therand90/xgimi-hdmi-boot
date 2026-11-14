@@ -143,11 +143,11 @@ adb -s "$TARGET" shell am start -n be.therand.xgimi.hdmiboot/.SetupActivity
 cat <<'NOTICE'
 
 Installation terminee.
-1. Sur le projecteur, ouvrir XGIMI HDMI Boot pour activer le service.
-2. Verifier avec ADB que WakeService est actif.
-3. Eteindre puis rallumer avec la telecommande : HDMI 2 doit s ouvrir apres ~4s.
-4. La recuperation apres reboot est experimentale et requiert l activation volontaire du service Accessibilite.
-5. La notification du service est normale : Android impose le service en premier plan.
+1. Ouvrir XGIMI HDMI Boot et verifier la commutation automatique.
+2. Pour le redemarrage complet : Parametres > Preferences relatives a l appareil > Accessibilite > XGIMI HDMI Boot (autostart) > Activer.
+3. Autoriser egalement Afficher par-dessus les autres applications.
+4. Tester veille/reveil (4 secondes) puis redemarrage complet (6 secondes apres connexion du service).
+5. La notification permanente est normale pour ce service Android.
 
 Logs (depuis Ubuntu) :
   adb logcat -d -s XgimiHdmiBoot:I ActivityTaskManager:W
