@@ -1,4 +1,4 @@
-# v1.2-rc3 experimental boot-recovery test
+# v1.2-rc4 experimental boot-recovery test
 
 **Not a public release.** The v1.1 release is unchanged.
 
@@ -20,27 +20,35 @@ git pull --ff-only
 ./INSTALL.sh PROJECTOR_IP:5555
 ```
 
-The expected APK is **1.2-rc3 (versionCode 5)**.
+The expected APK is **1.2-rc4 (versionCode 6)**.
 
-## Enable Accessibility when the Android TV settings screen is missing
+## Enable Accessibility from the XGIMI remote — verified on Horizon XK03H
 
-On some XGIMI firmware, Android has no Activity which handles `Settings.ACTION_ACCESSIBILITY_SETTINGS`. It is therefore **not available from the app UI**. The experimental build shows a readable status instead.
+The tested original Horizon exposes the accessibility menu **manually**, even though Android's `Settings.ACTION_ACCESSIBILITY_SETTINGS` intent and the tested shortcut activities do not open it.
 
-From Ubuntu, explicitly opt in through ADB:
+On the projector, open:
+
+**Settings → Device Preferences → Accessibility → XGIMI HDMI Boot (autostart) → Enable**.
+
+This was confirmed on the original XK03H: the user could disable and re-enable the helper with the remote, without issuing ADB commands. Reopen the app afterward to refresh its status label. No automatic enabling is required or attempted.
+
+**The overlay permission is separate.** The current app checks `Settings.canDrawOverlays()` before launching HDMI 2 from the background. It was granted on the tested projector with ADB by `INSTALL.sh`. **We have not yet validated a fully ADB-free first install**, so do not promise one in a public release until overlay can also be enabled through Android TV UI or an approved alternative mechanism is verified.
+
+### Optional ADB fallback for Accessibility
+
+If a different XGIMI firmware does not expose the service in its Accessibility settings, a user who explicitly opts in can run:
 
 ```bash
 bash tools/accessibility.sh PROJECTOR_IP:5555 enable
 ```
 
-This preserves other accessibility services already enabled on the device, and activates only `be.therand.xgimi.hdmiboot/.BootAccessibilityService`.
-
-To withdraw that permission later:
+This script preserves all other enabled services. To disable only this helper:
 
 ```bash
 bash tools/accessibility.sh PROJECTOR_IP:5555 disable
 ```
 
-The script never changes HDMI-CEC or ARC. The overlay permission must also remain granted.
+This script does not change HDMI-CEC, ARC, or the overlay permission.
 
 ## Verify service binding **before** reboot
 
@@ -74,6 +82,6 @@ adb -s "$D" logcat -d -t 1000 -s XgimiHdmiBoot:I '*:S'
 
 Only if Android rebinds the helper and restores `WakeService`, verify subsequent normal remote standby/wake without opening the app. **Do not merge or call this fixed** without both tests on an original Horizon XK03H.
 
-## UI changes in rc3
+## UI changes in rc4
 
-The on-projector screen is now scrollable with one enable/disable button and permission status labels. Removed: the manual HDMI test, the delayed test, the broken Accessibility Settings shortcut, and the superposition Settings shortcut. Permission management stays in the Linux/ADB guide.
+The on-projector screen is now scrollable with one enable/disable button, permission status labels, and the verified remote-control Accessibility menu instructions when the boot helper is disabled. Removed: the manual HDMI test, the delayed test, the broken Accessibility Settings shortcut, and the superposition Settings shortcut. The user can enable Accessibility with their remote; ADB remains an optional fallback and is still used by the installer for overlay permission on the tested firmware.
