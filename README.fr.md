@@ -2,6 +2,9 @@
 
 [English README](README.md)
 
+**[Télécharger l'APK signé v1.1](https://github.com/Therand90/xgimi-hdmi-boot/releases/download/v1.1/XGIMI-HDMI-Boot.apk)** · [Notes de version](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.1)
+
+
 **Une petite application Android TV qui sélectionne automatiquement HDMI 2 quand on rallume son XGIMI Horizon avec la télécommande.** Plus besoin de changer de launcher, d'installer Tasker ou de simuler des touches.
 
 ## Matériel testé et résultat
