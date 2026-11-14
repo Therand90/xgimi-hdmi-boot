@@ -1,61 +1,65 @@
-# XGIMI HDMI Boot — Documentation française
+# XGIMI HDMI Boot
 
-[English README](README.md)
+[English](README.md) · [Télécharger l'APK v1.1](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.1)
 
-**[Télécharger l'APK signé v1.1](https://github.com/Therand90/xgimi-hdmi-boot/releases/download/v1.1/XGIMI-HDMI-Boot.apk)** · [Notes de version](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.1)
+**Sélection automatique de HDMI 2 sur le XGIMI Horizon original, sans remplacer le launcher Android TV.**
 
+## Fonctionnalités
 
-**Une petite application Android TV qui sélectionne automatiquement HDMI 2 quand on rallume son XGIMI Horizon avec la télécommande.** Plus besoin de changer de launcher, d'installer Tasker ou de simuler des touches.
-
-## Matériel testé et résultat
-
-- **XGIMI Horizon original (XK03H)**, Android TV 11, firmware `RT.3.24.327`.
-- **Version 1.1** : testée et validée en conditions réelles avec extinction/rallumage par la télécommande.
-- HDMI 2 s'ouvre automatiquement ; dans la configuration testée, la proposition intempestive de passer sur HDMI 1 (home cinéma ARC) a également disparu.
-- Les fonctions ARC/CEC n'ont pas été modifiées.
-
-**Limite :** la sortie de veille est validée. La réception de `BOOT_COMPLETED` et le passage sur HDMI 2 après un vrai redémarrage complet d'Android sont implémentés mais pas encore confirmés de bout en bout. Les autres modèles XGIMI n'ont pas été testés.
-
-## Principe
-
-Le service léger détecte `SCREEN_ON`, attend 4 secondes, puis lance l'activité HDMI native avec l'identifiant `Hdmi2TvInputService/HW2`. À `SCREEN_OFF`, il annule toute commutation programmée. Sur un démarrage Android complet, un récepteur tente la commutation après 15 secondes.
-
-Le service reste en premier plan (notification persistante), pour pouvoir écouter la sortie de veille sans root. L'application n'a pas besoin d'accès réseau sur le projecteur et ne modifie pas les réglages ARC/CEC.
-
-## Installation sous Ubuntu
-
-Prérequis : ADB autorisé sur le projecteur et outils locaux :
-
-```bash
-sudo apt update
-sudo apt install -y adb openjdk-17-jdk-headless curl zip unzip openssl
-
-git clone https://github.com/Therand90/xgimi-hdmi-boot.git
-cd xgimi-hdmi-boot
-./INSTALL.sh IP_DU_PROJECTEUR:5555
-```
-
-Remplacer `IP_DU_PROJECTEUR` par l'adresse réelle du projecteur. Le script télécharge automatiquement le SDK Android officiel s'il manque, compile l'APK, le signe localement, puis l'installe.
-
-Pour compiler sans installer : `./INSTALL.sh --build-only`.
-
-Au premier lancement, ouvrir **XGIMI HDMI Boot** sur le projecteur. Vérifier le service actif et l'autorisation de superposition, puis tester **Tester HDMI 2 maintenant**. Ensuite, éteindre et rallumer normalement avec la télécommande.
-
-## Diagnostic
-
-```bash
-adb connect IP_DU_PROJECTEUR:5555
-adb -s IP_DU_PROJECTEUR:5555 logcat -d -s XgimiHdmiBoot:I ActivityTaskManager:W
-```
-
-Rechercher notamment `SCREEN_ON`, `Commutation programmee` et `Demande de commutation HDMI 2 envoyee`.
-
-## Attention à la signature Android
-
-Le dossier **`.signing/` contient la clé privée de signature** générée localement. Il ne doit jamais être publié. Conserver ce dossier pour les mises à jour futures : une nouvelle clé ne permet pas de remplacer l'APK déjà installé. Le `.gitignore` exclut cette clé, le dossier `build/` et les APK générés.
+- Ouvre l'entrée HDMI 2 native du projecteur à la sortie de veille.
+- Utilise l'application HDMI de XGIMI : pas de root, de Tasker ni de launcher alternatif.
+- Ne modifie pas les réglages HDMI-CEC ou HDMI ARC.
+- Permet d'activer ou désactiver l'automatisation et de tester manuellement HDMI 2.
 
 ## Compatibilité
 
-L'identifiant HDMI 2 est spécifique au Horizon original testé. Sur d'autres modèles, vérifier les entrées avec `adb shell dumpsys tv_input` avant toute adaptation. Les restrictions de lancement d'applications en arrière-plan varient selon les firmwares.
+| Élément | Configuration testée |
+| --- | --- |
+| Projecteur | XGIMI Horizon original (Full HD, XK03H) |
+| Android TV | 11 |
+| Firmware | RT.3.24.327 |
+| Entrée | HDMI 2 (`Hdmi2TvInputService/HW2`) |
 
-Projet communautaire indépendant, sans affiliation avec XGIMI. Licence MIT.
+Les autres modèles XGIMI et versions du firmware n'ont pas été testés. L'identifiant de l'entrée HDMI est spécifique au modèle.
+
+**Limitation connue de la v1.1 :** après un redémarrage complet d'Android, le service de détection du réveil peut ne pas se relancer. La sélection automatique à la sortie de veille a été confirmée **après activation du service**, mais un redémarrage complet a ensuite laissé ce service inactif. Ouvrir de nouveau l'application permet de le relancer. Un correctif est à l'étude. Ne pas compter sur cette version pour un démarrage autonome après une coupure de courant.
+
+## Installer l'APK
+
+1. [Télécharger l'APK signé](https://github.com/Therand90/xgimi-hdmi-boot/releases/download/v1.1/XGIMI-HDMI-Boot.apk) depuis la **Release v1.1**.
+2. Installer l'APK sur le projecteur avec un gestionnaire de fichiers Android TV compatible ou ADB.
+3. Ouvrir **XGIMI HDMI Boot** au moins une fois et sélectionner **Activer le HDMI 2 automatique**.
+4. Autoriser l'**affichage par-dessus les autres applications**, si Android TV propose le réglage. Sur certains firmwares, ce menu est masqué ; une alternative ADB figure ci-dessous.
+5. Tester avec **Tester HDMI 2 maintenant**, puis mettre le projecteur en veille et le rallumer avec la télécommande.
+
+Une petite notification permanente est normale lorsque le service de détection du réveil est actif.
+
+### Installation et autorisation via ADB (facultatif)
+
+Activer et autoriser le débogage Android sur le projecteur. Remplacer `IP_DU_PROJECTEUR` par son adresse IP locale :
+
+```bash
+adb connect IP_DU_PROJECTEUR:5555
+adb -s IP_DU_PROJECTEUR:5555 install --no-incremental -r XGIMI-HDMI-Boot.apk
+adb -s IP_DU_PROJECTEUR:5555 shell appops set be.therand.xgimi.hdmiboot SYSTEM_ALERT_WINDOW allow
+```
+
+Le projecteur doit accepter ADB sur TCP pour cet exemple. L'application n'a ensuite **pas besoin du réseau** pour fonctionner.
+
+## Dépannage
+
+Si la commutation automatique cesse après un redémarrage complet, rouvrir **XGIMI HDMI Boot** pour relancer son service (limitation connue en v1.1). Vérifier que l'automatisation est activée et que l'autorisation de superposition est accordée.
+
+Pour récupérer les logs :
+
+```bash
+adb -s IP_DU_PROJECTEUR:5555 logcat -d -s XgimiHdmiBoot:I ActivityTaskManager:W
+```
+
+## Compilation depuis les sources
+
+Consulter la [documentation de développement](docs/DEVELOPMENT.md). Une compilation locale utilise une **clé de signature différente** : l'APK obtenu ne pourra pas remplacer directement l'APK officiel sans désinstallation préalable.
+
+## Licence et avertissement
+
+[MIT](LICENSE). Projet communautaire indépendant, sans affiliation ni approbation de XGIMI.
