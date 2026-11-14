@@ -62,6 +62,10 @@ public final class SetupActivity extends Activity {
         addText("Demarrage apres reboot : " +
                 (bootHelper ? "ACCESSIBILITE ACTIVEE" : "ACCESSIBILITE NON ACTIVEE"),
             16, bootHelper ? 0xff99dd99 : 0xffffbf77);
+        if (!bootHelper) {
+            addText("Pour activer le demarrage automatique apres un redemarrage du projecteur, merci d'aller dans : Parametres > Preferences relatives a l'appareil > Accessibilite > XGIMI HDMI Boot (autostart) > Activer.",
+                14, 0xffffbf77);
+        }
 
         Button toggle = new Button(this);
         toggle.setText(enabled ? "Desactiver HDMI 2 automatique" : "Activer HDMI 2 automatique");
@@ -120,10 +124,6 @@ public final class SetupActivity extends Activity {
         overlayButtonParams.topMargin = 8;
         root.addView(overlayButton, overlayButtonParams);
 
-        addText(bootHelper
-                ? "Demarrage apres reboot configure. Vous pouvez fermer cette application."
-                : "Pour activer le demarrage apres reboot avec la telecommande : Parametres > Preferences relatives a l'appareil > Accessibilite > XGIMI HDMI Boot (autostart) > Activer.",
-            14, 0xffbbbbbb);
         if (!overlay) {
             addText("L'autorisation 'Afficher par-dessus les autres applications' manque. Elle est indispensable a cette version pour commuter depuis l'arriere-plan.",
                 14, 0xffffbf77);
