@@ -16,15 +16,15 @@ First public release of a small Android TV utility that switches the original XG
 - Does not disable or modify HDMI-CEC / ARC
 
 ### Installation
-Download `XGIMI-HDMI-Boot-v1.1.apk` from this release and sideload it onto the projector. Open the application once, enable the automation, and grant the Android overlay permission (on the tested Horizon firmware it can be allowed via ADB):
+Download `XGIMI-HDMI-Boot.apk` from this release and sideload it onto the projector. Open the application once, enable the automation, and grant the Android overlay permission (on the tested Horizon firmware it can be allowed via ADB):
 
 ```bash
 adb connect PROJECTOR_IP:5555
-adb -s PROJECTOR_IP:5555 install -r XGIMI-HDMI-Boot-v1.1.apk
+adb -s PROJECTOR_IP:5555 install --no-incremental -r XGIMI-HDMI-Boot.apk
 adb -s PROJECTOR_IP:5555 shell appops set be.therand.xgimi.hdmiboot SYSTEM_ALERT_WINDOW allow
 ```
 
-ADB debugging must be enabled and approved on the projector. Follow the [README](README.md) for detailed instructions and source builds.
+ADB debugging must be enabled and approved on the projector. Follow the [README](https://github.com/Therand90/xgimi-hdmi-boot/blob/main/README.md) for detailed instructions and source builds.
 
 ### Compatibility notes
 This APK is designed for the original Horizon's HDMI 2 identifier, `com.xgimi.tvinput/.inputservice.Hdmi2TvInputService/HW2`. Other models and firmware versions are untested. Android firmware restrictions may prevent background launch on other devices.
