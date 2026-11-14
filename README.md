@@ -1,42 +1,44 @@
 # XGIMI HDMI Boot
 
-[Français](README.fr.md) · [Download APK v1.1](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.1)
+[Français](README.fr.md) · [Download v1.2 APK](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.2)
 
-**Automatically select HDMI 2 on the original XGIMI Horizon without replacing the Android TV launcher.**
+**Automatically select native HDMI 2 on the original XGIMI Horizon**, after Android TV reboots and wake-from-standby, without replacing the launcher.
 
 ## Features
 
-- Opens the projector's native HDMI 2 input when waking from standby.
-- Uses the XGIMI HDMI input application; no root, Tasker or alternative launcher.
-- Does not change HDMI-CEC or HDMI ARC settings.
-- Provides an on-device enable/disable switch and a manual HDMI 2 test.
+- Selects HDMI 2 after a **full Android boot** or **remote-control standby/wake**.
+- Tested timing: approximately **6 seconds after the boot helper connects**, and **4 seconds after normal wake**.
+- Leaves HDMI-CEC and HDMI 1 ARC settings untouched; no root, Tasker or alternative launcher needed.
+- Clean on-device interface: an automation toggle, overlay-permission button and permission status.
 
 ## Compatibility
 
 | Item | Tested configuration |
 | --- | --- |
-| Projector | XGIMI Horizon (original Full HD model, XK03H) |
+| Projector | Original XGIMI Horizon Full HD (XK03H) |
 | Android TV | 11 |
 | Firmware | RT.3.24.327 |
 | Input | HDMI 2 (`Hdmi2TvInputService/HW2`) |
 
-Other XGIMI models and firmware versions have not been tested. This app uses a model-specific HDMI input identifier.
+**Other XGIMI models and firmware versions are not tested.** HDMI 2 switching relies on the tested projector's native input identifier.
 
-**Known limitation in v1.1:** automatic recovery after a complete Android reboot is unreliable on the tested projector. The wake-from-standby functionality was confirmed **after the app's service had been started**, but a later full reboot left the service inactive. Opening the app again restores service startup. A fix is being investigated. Do not rely on v1.1 for unattended startup after a power interruption.
+## Install with the TV remote
 
-## Install the APK
+1. [Download the v1.2 APK](https://github.com/Therand90/xgimi-hdmi-boot/releases/download/v1.2/XGIMI-HDMI-Boot.apk) and sideload it with a compatible Android TV file manager.
+2. Open **XGIMI HDMI Boot**. Automatic HDMI 2 is enabled by default; a toggle can disable it.
+3. **Enable startup after full reboot** under `Settings → Device Preferences → Accessibility → XGIMI HDMI Boot (autostart) → Enable`. This path and remote-control activation were tested on the original Horizon XK03H.
+4. **Allow the app to display over other apps:** `Settings → Apps → Special app access → Display over other apps → XGIMI HDMI Boot`. The tested projector exposes this system menu. The app also includes a **Manage overlay permission** shortcut.
+5. Reopen the app to confirm the permission statuses, then test standby/wake using the remote.
 
-1. [Download the signed APK](https://github.com/Therand90/xgimi-hdmi-boot/releases/download/v1.1/XGIMI-HDMI-Boot.apk) from the **v1.1 release**.
-2. Sideload it on the projector using a compatible Android TV file manager or ADB.
-3. Open **XGIMI HDMI Boot** on the projector at least once and select **Enable automatic HDMI 2**.
-4. Grant the **Display over other apps** permission, if offered by Android TV. On some firmware versions this setting is hidden; see the ADB alternative below.
-5. Check **Test HDMI 2 now**, then put the projector in standby and wake it using the remote.
+**ADB-free setup caveat:** enabling Accessibility using only the remote has been verified. The overlay menu is visible on the tested projector, but a completely fresh install without ADB has not yet been independently validated. An optional ADB fallback is provided below.
 
-A small persistent notification is expected while the wake-detection service runs.
+The optional Accessibility bootstrap **does not request accessibility events, screen content or gestures**. Accessibility is still a sensitive system permission; enable it only if you trust the app. Without the helper, the tested XGIMI firmware may prevent the app from restarting automatically after a full boot.
 
-### Optional ADB installation and permission
+A small persistent notification is expected while Android's foreground wake listener is running.
 
-Enable and authorize Android debugging on the projector. Replace `PROJECTOR_IP` with its LAN IP address:
+## Optional ADB installation
+
+Replace `PROJECTOR_IP` with the projector's local IP address:
 
 ```bash
 adb connect PROJECTOR_IP:5555
@@ -44,22 +46,16 @@ adb -s PROJECTOR_IP:5555 install --no-incremental -r XGIMI-HDMI-Boot.apk
 adb -s PROJECTOR_IP:5555 shell appops set be.therand.xgimi.hdmiboot SYSTEM_ALERT_WINDOW allow
 ```
 
-The projector must support ADB over TCP for this example. The app itself does **not** need a network connection after installation.
+Accessibility should be explicitly enabled from the projector's settings (or through the opt-in developer helper `tools/accessibility.sh`). The application doesn't need any network connection once configured.
 
-## Troubleshooting
+## Upgrading from v1.1
 
-If wake switching stops working after a full reboot, open **XGIMI HDMI Boot** again on the projector to restart its wake-detection service (v1.1 known issue). Ensure automation remains enabled and the overlay permission is granted.
+The **official v1.2 release APK** uses the same signing certificate as v1.1, allowing a direct update without uninstalling or losing app settings. GitHub Actions builds use a **temporary signing key** and are not distributable updates.
 
-For diagnostic logs:
+## Help and development
 
-```bash
-adb -s PROJECTOR_IP:5555 logcat -d -s XgimiHdmiBoot:I ActivityTaskManager:W
-```
+If switching doesn't work, check both permissions. Reopening the app refreshes the displayed statuses. Report issues in [GitHub Issues](https://github.com/Therand90/xgimi-hdmi-boot/issues).
 
-## Build from source
+[Release notes](RELEASE_NOTES_v1.2.md) · [Build/development instructions](docs/DEVELOPMENT.md)
 
-Developers can follow [Build and development](docs/DEVELOPMENT.md). Building locally generates a **different signing key**; a locally signed APK cannot update the official release APK without uninstalling it first.
-
-## License and disclaimer
-
-[MIT](LICENSE). Independent community project; not affiliated with or endorsed by XGIMI.
+Independent community project, [MIT licensed](LICENSE); not affiliated with or endorsed by XGIMI.
