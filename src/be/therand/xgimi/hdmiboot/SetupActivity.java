@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
@@ -90,6 +91,35 @@ public final class SetupActivity extends Activity {
         buttonParams.topMargin = 14;
         root.addView(toggle, buttonParams);
 
+        Button overlayButton = new Button(this);
+        overlayButton.setText("Gerer l'autorisation de superposition");
+        overlayButton.setAllCaps(false);
+        overlayButton.setTextSize(18);
+        overlayButton.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View view) {
+                Intent settings = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+                try {
+                    startActivity(settings);
+                } catch (RuntimeException e) {
+                    // Some Android TV firmwares hide the special-access activity.
+                    try {
+                        startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.parse("package:" + getPackageName())));
+                    } catch (RuntimeException nested) {
+                        Toast.makeText(SetupActivity.this,
+                            "Ouvrez Parametres > Applications > Acces special > Afficher par-dessus les autres applications",
+                            Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        });
+        LinearLayout.LayoutParams overlayButtonParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT);
+        overlayButtonParams.topMargin = 8;
+        root.addView(overlayButton, overlayButtonParams);
+
         addText(bootHelper
                 ? "Demarrage apres reboot configure. Vous pouvez fermer cette application."
                 : "Pour activer le demarrage apres reboot avec la telecommande : Parametres > Preferences relatives a l'appareil > Accessibilite > XGIMI HDMI Boot (autostart) > Activer.",
@@ -97,6 +127,8 @@ public final class SetupActivity extends Activity {
         if (!overlay) {
             addText("L'autorisation 'Afficher par-dessus les autres applications' manque. Elle est indispensable a cette version pour commuter depuis l'arriere-plan.",
                 14, 0xffffbf77);
+            addText("Chemin manuel : Parametres > Applications > Acces special aux applications > Afficher par-dessus les autres applications > XGIMI HDMI Boot.",
+                14, 0xffbbbbbb);
         }
     }
 
