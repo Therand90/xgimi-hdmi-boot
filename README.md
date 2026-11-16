@@ -1,15 +1,24 @@
 # XGIMI HDMI Boot
 
-[Français](README.fr.md) · [Download v1.2 APK](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.2)
+[Français](README.fr.md) · [Latest public stable APK: v1.2](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.2) · [v1.3 release candidate](https://github.com/Therand90/xgimi-hdmi-boot/pull/5)
 
-**Automatically select native HDMI 2 on the original XGIMI Horizon**, after Android TV reboots and wake-from-standby, without replacing the launcher.
+**Automatically select native HDMI 2 on the original XGIMI Horizon** after Android TV reboot or wake-from-standby, without replacing the Android TV launcher.
 
-## Features
+## v1.3 features
 
-- Selects HDMI 2 after a **full Android boot** or **remote-control standby/wake**.
-- Tested timing: approximately **6 seconds after the boot helper connects**, and **4 seconds after normal wake**.
-- Leaves HDMI-CEC and HDMI 1 ARC settings untouched; no root, Tasker or alternative launcher needed.
-- Clean on-device interface: an automation toggle, overlay-permission button and permission status.
+- Select HDMI 2 on wake and full boot.
+- **Faster tentative timing:** 1 second after screen-on and 3 seconds after the boot Accessibility helper connects (previously 4 / 6 seconds). These faster timings require on-device regression testing. An Android activity-launch exception triggers at most **one retry** 3 seconds later.
+- **Dismiss the native XGIMI “Source detected” dialog** when an HDMI 1 device is connected while HDMI 2 is selected, using a guarded Accessibility action. The feature can be turned off in the app.
+- No development-only popup diagnostic button.
+- No global HDMI-CEC or ARC/eARC setting changes, no root, Tasker or custom launcher.
+
+## HDMI-CEC: One Touch Play / source routing
+
+**Many HDMI-CEC source devices** (AV receivers, soundbars, media players, game consoles, and others) can ask a projector or TV to switch input automatically when powered on. This is separate from the XGIMI “Source detected” popup. Closing the popup cannot prevent an incoming HDMI-CEC source-selection command.
+
+**If your HDMI device steals focus from HDMI 2, disable only its “One Touch Play”, “One-touch playback” or equivalent input-switching feature** in that device's HDMI-CEC settings. The wording varies by manufacturer (for example EasyLink, Anynet+, SIMPLINK, BRAVIA Sync). **Keep global HDMI-CEC enabled** if you rely on ARC/eARC, synced power or volume control.
+
+The tested example was a Philips home cinema system with **EasyLink → One Touch Play disabled**. Philips is **not required**; different HDMI devices need independent verification.
 
 ## Compatibility
 
@@ -18,27 +27,24 @@
 | Projector | Original XGIMI Horizon Full HD (XK03H) |
 | Android TV | 11 |
 | Firmware | RT.3.24.327 |
-| Input | HDMI 2 (`Hdmi2TvInputService/HW2`) |
+| Target | HDMI 2 (`Hdmi2TvInputService/HW2`) |
+| Dialog | Native XGIMI `XGMDialog` following HDMI 1 detection |
 
-**Other XGIMI models and firmware versions are not tested.** HDMI 2 switching relies on the tested projector's native input identifier.
+Other XGIMI models/firmware versions have **not** been tested.
 
-## Install with the TV remote
+## Install using the remote
 
-1. [Download the v1.2 APK](https://github.com/Therand90/xgimi-hdmi-boot/releases/download/v1.2/XGIMI-HDMI-Boot.apk) and sideload it with a compatible Android TV file manager.
-2. Open **XGIMI HDMI Boot**. Automatic HDMI 2 is enabled by default; a toggle can disable it.
-3. **Enable startup after full reboot** under `Settings → Device Preferences → Accessibility → XGIMI HDMI Boot (autostart) → Enable`. This path and remote-control activation were tested on the original Horizon XK03H.
-4. **Allow the app to display over other apps:** `Settings → Apps → Special app access → Display over other apps → XGIMI HDMI Boot`. The tested projector exposes this system menu. The app also includes a **Manage overlay permission** shortcut.
-5. Reopen the app to confirm the permission statuses, then test standby/wake using the remote.
+1. Until the v1.3 candidate is validated and published, [download the signed v1.2 stable APK](https://github.com/Therand90/xgimi-hdmi-boot/releases/download/v1.2/XGIMI-HDMI-Boot.apk).
+2. Open **XGIMI HDMI Boot**. HDMI 2 automation is enabled by default. v1.3 also offers a toggle to disable popup dismissal.
+3. **Enable the optional Accessibility service**: `Settings → Device Preferences → Accessibility → XGIMI HDMI Boot (autostart) → Enable`. On the tested projector, this service recovers after full boot and (in v1.3) receives XGIMI HDMI-player window-state events.
+4. **Allow Display over other apps**: `Settings → Apps → Special app access → Display over other apps → XGIMI HDMI Boot`. The app also has a shortcut to manage this permission.
+5. Reopen the app to confirm both permissions; test standby/wake and a full Android reboot.
 
-**ADB-free setup caveat:** enabling Accessibility using only the remote has been verified. The overlay menu is visible on the tested projector, but a completely fresh install without ADB has not yet been independently validated. An optional ADB fallback is provided below.
+**Privacy and limits:** v1.3 does not request access to window contents, screenshots, user text or other apps' Accessibility events. It only receives window-state changes from `com.xgimi.xhplayer`. Automatic BACK requires both an HDMI1-connected TV-input callback and an `XGMDialog` event within 4 seconds, and at most one BACK every 15 seconds. As `XGMDialog` is generic, another XGIMI dialog appearing in the same short interval could be dismissed. This optional behavior can be disabled.
 
-The optional Accessibility bootstrap **does not request accessibility events, screen content or gestures**. Accessibility is still a sensitive system permission; enable it only if you trust the app. Without the helper, the tested XGIMI firmware may prevent the app from restarting automatically after a full boot.
+The persistent notification for the wake listener is expected.
 
-A small persistent notification is expected while Android's foreground wake listener is running.
-
-## Optional ADB installation
-
-Replace `PROJECTOR_IP` with the projector's local IP address:
+## Optional ADB install
 
 ```bash
 adb connect PROJECTOR_IP:5555
@@ -46,16 +52,12 @@ adb -s PROJECTOR_IP:5555 install --no-incremental -r XGIMI-HDMI-Boot.apk
 adb -s PROJECTOR_IP:5555 shell appops set be.therand.xgimi.hdmiboot SYSTEM_ALERT_WINDOW allow
 ```
 
-Accessibility should be explicitly enabled from the projector's settings (or through the opt-in developer helper `tools/accessibility.sh`). The application doesn't need any network connection once configured.
+Accessibility still requires explicit consent from the projector user. Internet access is not needed for normal operation once configured.
 
-## Upgrading from v1.1
+## Updates and releases
 
-The **official v1.2 release APK** uses the same signing certificate as v1.1, allowing a direct update without uninstalling or losing app settings. GitHub Actions builds use a **temporary signing key** and are not distributable updates.
+The v1.2 release is signed with the original maintainer certificate. Official v1.3 builds must use the **same key** so users can update without uninstalling. GitHub Actions builds are signed with a **temporary key** and must never be shipped as compatible release APKs.
 
-## Help and development
+[v1.3 release notes](RELEASE_NOTES_v1.3.md) · [Development guide](docs/DEVELOPMENT.md) · [GitHub Issues](https://github.com/Therand90/xgimi-hdmi-boot/issues)
 
-If switching doesn't work, check both permissions. Reopening the app refreshes the displayed statuses. Report issues in [GitHub Issues](https://github.com/Therand90/xgimi-hdmi-boot/issues).
-
-[Release notes](RELEASE_NOTES_v1.2.md) · [Build/development instructions](docs/DEVELOPMENT.md)
-
-Independent community project, [MIT licensed](LICENSE); not affiliated with or endorsed by XGIMI.
+Independent [MIT-licensed](LICENSE) community project, not affiliated with or endorsed by XGIMI.
