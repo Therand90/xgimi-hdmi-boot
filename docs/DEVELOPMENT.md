@@ -1,6 +1,6 @@
 # Development and local builds — v1.3
 
-Public stable release before v1.3 publication: [v1.2](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.2). The v1.3 branch is a release candidate and must be tested on hardware before merging and signing a public release.
+Official release: [v1.3](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.3). The v1.3 wake timing and full reboot behavior were verified on the original Horizon XK03H. This document also describes the maintainer-only signing/release procedure.
 
 ## Prerequisites
 
