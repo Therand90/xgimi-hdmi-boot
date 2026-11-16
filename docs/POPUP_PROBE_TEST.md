@@ -48,3 +48,24 @@ git switch main
 ```
 
 Le service d'accessibilité peut nécessiter un arrêt/réactivation dans les paramètres du XGIMI après mise à jour, selon le firmware.
+
+## Test experimental de fermeture automatique
+
+**Désactivé par défaut.** L'option « Tester la fermeture automatique du popup HDMI 1 » est indépendante du diagnostic.
+
+Le service d'accessibilité enregistre l'heure du callback `TvInputManager.onInputStateChanged` pour l'entrée exacte `Hdmi1TvInputService/HW1`, seulement quand l'état devient `INPUT_STATE_CONNECTED`. Il n'envoie `GLOBAL_ACTION_BACK` **que** si un événement de changement de fenêtre du paquet `com.xgimi.xhplayer` porte le nom de classe `com.xgimi.dialog.XGMDialog` dans les **4 secondes** suivantes. Maximum une tentative par **15 secondes**, et une tentative unique par détection. Aucun accès au contenu de l'écran n'est accordé.
+
+**Limitation :** `XGMDialog` est un composant générique. Une autre boîte de dialogue XGIMI affichée dans cette fenêtre de quatre secondes pourrait également être fermée. Le test doit donc être volontaire et temporaire. Si le callback `TvInputManager` n'est pas accessible à une application ordinaire, le service journalise `HDMI1 observer unavailable` et n'envoie pas Retour.
+
+1. Depuis l'application, activer **Fermeture popup HDMI 1** (et, si souhaité, le **Diagnostic popup**).
+2. Laisser HDMI 2 affiché et rallumer le Philips avec `Lecture 1 pression` désactivé.
+3. Vérifier si la proposition de passer sur HDMI 1 disparaît sans quitter HDMI 2.
+4. Consulter uniquement les lignes du test, sans script en arrière-plan :
+
+```bash
+adb -s 192.168.0.7:5555 logcat -d -s XgimiHdmiBoot:I | grep -E 'POPUP_AUTOCLOSE|POPUP_PROBE' | tail -60
+```
+
+5. Contrôler que HDMI 2 et **ARC** fonctionnent. Désactiver l'option dans l'application après les essais.
+
+La branche maintient `versionCode=9` pour permettre une réinstallation de la version stable (même certificat) et ne change ni le délai de réveil ni l'API HDMI. Le nom de la version test est `1.2-popup-autoclose-test`.
