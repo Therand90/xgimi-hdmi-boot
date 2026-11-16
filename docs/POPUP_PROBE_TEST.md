@@ -1,71 +1,24 @@
-# Test — événements de fenêtre du popup HDMI (XK03H)
+# Archive: diagnostic du popup HDMI, novembre 2026
 
-Cette branche est un **diagnostic expérimental**. Elle ne désactive PAS la commutation HDMI et ne ferme PAS de fenêtre. Elle permet seulement de déterminer si Android Accessibility distingue le popup XGIMI du simple affichage HDMI 2.
+Ce document décrit le **protocole expérimental ayant permis d'identifier** le popup XGIMI et de valider une fermeture ciblée. Le **bouton de diagnostic et les logs `POPUP_PROBE` ont été supprimés de la version v1.3**.
 
-## Sécurité et vie privée
+## Preuves sur le Horizon XK03H
 
-- Diagnostic **désactivé par défaut**, à activer explicitement depuis l'application.
-- Écoute uniquement `TYPE_WINDOW_STATE_CHANGED` du paquet `com.xgimi.xhplayer`.
-- Journalise **seulement** le nom de classe de la fenêtre, son identifiant et l'heure de l'événement.
-- `canRetrieveWindowContent=false` et `canPerformGestures=false` : pas de lecture de texte ou d'arbre d'accessibilité, pas de capture, aucun appui sur Retour, aucune action sur les entrées.
-- Le service d'accessibilité existant reste utilisé pour amorcer l'écoute du réveil ; la commutation HDMI 2 reste à **4 s** au réveil, **6 s** après reboot.
-- Ne pas diffuser les logs complets d'autres applications.
+- 19:26:19.889 : HDMI 1 devient actif (`[XGIMI CEC] Notify HDMIport:1 5v chg to:1`).
+- 19:26:19.988 : `com.xgimi.xhplayer.InputActivity.signalChange()` appelle `showNewSignalDialog()`.
+- Le service OEM indépendant `HDMITipWindowManager` signale `not show` dans ce cas.
+- L'API matérielle `getHdmiAutoSwitch()` retourne **1**, mais l'accès à un setter pour une application Android non privilégiée n'est **pas établi**.
+- L'événement Accessibility du popup porte `com.xgimi.dialog.XGMDialog`. Ce composant est générique : il ne suffit pas à lui seul pour justifier un appui Retour.
+- 19:56:43.779 : un événement `TvInputManager.onInputStateChanged(HDMI1, CONNECTED)` a été reçu par l'application.
+- 19:56:43.825 : événement `XGMDialog` (46 ms plus tard).
+- 19:56:43.832 : `performGlobalAction(GLOBAL_ACTION_BACK)` accepté (7 ms plus tard) ; fermeture du popup **confirmée visuellement** et HDMI 2 conservé.
+- L'utilisateur a confirmé que le son ARC, le volume et l'extinction synchronisée fonctionnaient pendant les essais avec One Touch Play désactivé.
 
-## Installation
+## Limites
 
-Sur Ubuntu, avec les clefs de signature `.signing/release.jks` et `.signing/password` déjà présentes dans le checkout (ne jamais les commiter) :
+- Un événement `XGMDialog` indépendant affiché durant la courte fenêtre après HDMI1 pourrait aussi être fermé ; v1.3 conserve donc un interrupteur de désactivation.
+- La fermeture du popup ne bloque **pas** les commandes HDMI-CEC `Active Source` / `One Touch Play` qui peuvent forcer un autre port HDMI.
+- Pour préserver ARC/eARC et les fonctions d'alimentation CEC, **désactiver seulement « Lecture en une touche » / « One Touch Play » sur l'appareil source qui impose son entrée**, si nécessaire. Ce réglage peut concerner diverses marques et diverses catégories d'appareils ; le Philips EasyLink est uniquement l'exemple testé.
+- Les nouveaux délais de la v1.3 (1 s / 3 s) nécessitent des essais supplémentaires sur le projecteur.
 
-```bash
-cd ~/Téléchargements/xgimi-hdmi-boot
-git fetch origin
-git switch --track origin/test/popup-window-events
-./INSTALL.sh 192.168.0.7:5555
-```
-
-Le `versionCode` reste volontairement à **9** (comme la v1.2 stable), afin de revenir à la v1.2 en réinstallant **sans désinstaller** avec la même signature. Le `versionName` est `1.2-popup-probe`.
-
-## Procédure
-
-1. Sur le XGIMI, ouvrir **XGIMI HDMI Boot**, vérifier que **XGIMI HDMI Boot (autostart)** est activé dans Accessibilité.
-2. Appuyer sur **Activer le diagnostic du popup**.
-3. Laisser le projecteur sur HDMI 2, sans popup : accéder une fois à HDMI 2 depuis l'écran d'accueil et relever les événements normaux.
-4. Désactiver temporairement « Lecture 1 pression » sur le Philips (le temps du test seulement). Rallumer le Philips pour faire apparaître « Source détectée » ; ne pas fermer tout de suite.
-5. Sur Ubuntu, lire uniquement les événements du diagnostic :
-   ```bash
-   adb -s 192.168.0.7:5555 logcat -d -s XgimiHdmiBoot:I | grep POPUP_PROBE | tail -40
-   ```
-6. Appuyer une fois sur **Retour** pour fermer le popup, puis relever à nouveau les événements.
-7. Désactiver **Diagnostic du popup** dans l'application.
-
-Comparer `class` et `windowId` AVANT / PENDANT / APRÈS pour vérifier s'il existe une signature **spécifique à ce seul popup**. Si les événements ne donnent pas une signature fiable, **ne pas automatiser BACK**.
-
-## Retour à la version officielle
-
-```bash
-cd ~/Téléchargements/xgimi-hdmi-boot
-git switch main
-./INSTALL.sh 192.168.0.7:5555
-```
-
-Le service d'accessibilité peut nécessiter un arrêt/réactivation dans les paramètres du XGIMI après mise à jour, selon le firmware.
-
-## Test experimental de fermeture automatique
-
-**Désactivé par défaut.** L'option « Tester la fermeture automatique du popup HDMI 1 » est indépendante du diagnostic.
-
-Le service d'accessibilité enregistre l'heure du callback `TvInputManager.onInputStateChanged` pour l'entrée exacte `Hdmi1TvInputService/HW1`, seulement quand l'état devient `INPUT_STATE_CONNECTED`. Il n'envoie `GLOBAL_ACTION_BACK` **que** si un événement de changement de fenêtre du paquet `com.xgimi.xhplayer` porte le nom de classe `com.xgimi.dialog.XGMDialog` dans les **4 secondes** suivantes. Maximum une tentative par **15 secondes**, et une tentative unique par détection. Aucun accès au contenu de l'écran n'est accordé.
-
-**Limitation :** `XGMDialog` est un composant générique. Une autre boîte de dialogue XGIMI affichée dans cette fenêtre de quatre secondes pourrait également être fermée. Le test doit donc être volontaire et temporaire. Si le callback `TvInputManager` n'est pas accessible à une application ordinaire, le service journalise `HDMI1 observer unavailable` et n'envoie pas Retour.
-
-1. Depuis l'application, activer **Fermeture popup HDMI 1** (et, si souhaité, le **Diagnostic popup**).
-2. Laisser HDMI 2 affiché et rallumer le Philips avec `Lecture 1 pression` désactivé.
-3. Vérifier si la proposition de passer sur HDMI 1 disparaît sans quitter HDMI 2.
-4. Consulter uniquement les lignes du test, sans script en arrière-plan :
-
-```bash
-adb -s 192.168.0.7:5555 logcat -d -s XgimiHdmiBoot:I | grep -E 'POPUP_AUTOCLOSE|POPUP_PROBE' | tail -60
-```
-
-5. Contrôler que HDMI 2 et **ARC** fonctionnent. Désactiver l'option dans l'application après les essais.
-
-La branche maintient `versionCode=9` pour permettre une réinstallation de la version stable (même certificat) et ne change ni le délai de réveil ni l'API HDMI. Le nom de la version test est `1.2-popup-autoclose-test`.
+Le suivi d'origine figure dans [l'issue #3](https://github.com/Therand90/xgimi-hdmi-boot/issues/3) et la [PR #5](https://github.com/Therand90/xgimi-hdmi-boot/pull/5).
