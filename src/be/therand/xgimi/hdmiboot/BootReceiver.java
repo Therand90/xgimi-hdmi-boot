@@ -16,7 +16,7 @@ public final class BootReceiver extends BroadcastReceiver {
             }
             try {
                 WakeService.start(context);
-                SwitchReceiver.schedule(context, 6000);
+                SwitchReceiver.schedule(context, 3000);
             } catch (RuntimeException e) {
                 Log.e(HdmiSwitch.TAG, "Echec demarrage du service au boot", e);
             }
