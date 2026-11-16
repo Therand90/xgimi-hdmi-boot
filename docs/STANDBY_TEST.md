@@ -1,4 +1,4 @@
-# Standby/wake delay experiment (v1.2.1-rc1)
+# Standby/wake delay experiment (v1.2-8s-test)
 
 The published v1.2 remains unchanged. This test changes **only** the `ACTION_SCREEN_ON` delay from 4,000 ms to 8,000 ms, to determine whether the HDMI 2 request was being issued before the projector was ready or before another HDMI component selected its source.
 
@@ -16,7 +16,7 @@ test -f .signing/release.jks && test -f .signing/password
 ./INSTALL.sh 192.168.0.7:5555
 ```
 
-The APK is `1.2.1-rc1` (versionCode 10), to permit an update over v1.2 (versionCode 9). Before the test, confirm the app's Accessibility and overlay permissions remain enabled. The Accessibility setting must not be silently changed.
+The APK is `1.2-8s-test` (**versionCode 9**, unchanged from v1.2) and uses the same signing key. Keeping the same versionCode makes it possible to reinstall the stable v1.2 with `adb install -r` if the test fails; this is a temporary test build, **not** a release. Before the test, confirm the app's Accessibility and overlay permissions remain enabled. The Accessibility setting must not be silently changed.
 
 ## Controlled standby/wake observations
 
@@ -38,6 +38,6 @@ The relevant logs should say `SCREEN_ON recu : HDMI 2 programme dans 8 secondes`
 
 ## Reverting
 
-To restore the current public build, install the *original* locally signed v1.2 APK if saved. Android normally refuses downgrading from versionCode 10 to 9; restoring the earlier version without data loss may require `adb install -r -d` and may be blocked by the firmware. Avoid uninstalling or resetting app data unnecessarily. The safest path before publication is to keep this change isolated on the test branch.
+To restore the current public build, reinstall the *published* v1.2 APK with `adb install --no-incremental -r XGIMI-HDMI-Boot.apk` (downloaded from the official v1.2 GitHub Release). VersionCode stays 9 and the same release signing certificate is used, so normal reinstalls preserve settings. Avoid uninstalling or resetting app data unnecessarily. The change remains isolated on a test branch.
 
 Only publish a new compatible release after on-device confirmation.
