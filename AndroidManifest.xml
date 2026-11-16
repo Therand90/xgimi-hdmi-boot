@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="be.therand.xgimi.hdmiboot"
-    android:versionCode="9" android:versionName="1.2-popup-probe">
+    android:versionCode="9" android:versionName="1.2-popup-autoclose-test">
 
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="30" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
