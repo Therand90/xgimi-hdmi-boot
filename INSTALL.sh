@@ -146,8 +146,8 @@ Installation terminee.
 1. Ouvrir XGIMI HDMI Boot et verifier la commutation automatique.
 2. Pour le redemarrage complet : Parametres > Preferences relatives a l appareil > Accessibilite > XGIMI HDMI Boot (autostart) > Activer.
 3. Autoriser egalement Afficher par-dessus les autres applications.
-4. Tester veille/reveil (4 secondes) puis redemarrage complet (6 secondes apres connexion du service).
-5. La notification permanente est normale pour ce service Android.
+4. Tester veille/reveil (1 seconde) puis redemarrage complet (3 secondes apres connexion du service).
+5. Conserver HDMI-CEC/ARC. Si une source HDMI externe prend le dessus, desactiver seulement son option One Touch Play.\n6. La notification permanente est normale pour ce service Android.
 
 Logs (depuis Ubuntu) :
   adb logcat -d -s XgimiHdmiBoot:I ActivityTaskManager:W
