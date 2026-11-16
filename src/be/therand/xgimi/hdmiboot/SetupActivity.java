@@ -33,6 +33,10 @@ public final class SetupActivity extends Activity {
         scroll.addView(root);
         setContentView(scroll);
 
+        // Drop the v1.2 experimental-only diagnostic flag on upgrade.
+        getSharedPreferences("config", MODE_PRIVATE)
+            .edit().remove("popup_probe").apply();
+
         // Opening the app manually also recovers wake listening in v1.x.
         if (isEnabled()) startWakeService();
         render();
@@ -66,6 +70,49 @@ public final class SetupActivity extends Activity {
             addText("Pour activer le demarrage automatique apres un redemarrage du projecteur, merci d'aller dans : Parametres > Preferences relatives a l'appareil > Accessibilite > XGIMI HDMI Boot (autostart) > Activer.",
                 14, 0xffffbf77);
         }
+
+        final boolean popupAutoclose = getSharedPreferences("config", MODE_PRIVATE)
+            .getBoolean("popup_autoclose", true);
+        addText("Fermeture popup HDMI 1 : "
+                + (popupAutoclose ? "ACTIVEE" : "DESACTIVEE"),
+            16, popupAutoclose ? 0xff99dd99 : 0xffbbbbbb);
+
+        Button closePopupButton = new Button(this);
+        closePopupButton.setText(popupAutoclose
+            ? "Desactiver la fermeture popup HDMI 1"
+            : "Activer la fermeture popup HDMI 1");
+        closePopupButton.setAllCaps(false);
+        closePopupButton.setTextSize(16);
+        closePopupButton.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View view) {
+                boolean next = !getSharedPreferences("config", MODE_PRIVATE)
+                    .getBoolean("popup_autoclose", true);
+                getSharedPreferences("config", MODE_PRIVATE)
+                    .edit().putBoolean("popup_autoclose", next).apply();
+                Toast.makeText(SetupActivity.this,
+                    next ? "Fermeture popup activee"
+                         : "Fermeture automatique desactivee",
+                    Toast.LENGTH_SHORT).show();
+                render();
+            }
+        });
+        LinearLayout.LayoutParams closePopupParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT);
+        closePopupParams.topMargin = 8;
+        root.addView(closePopupButton, closePopupParams);
+
+        addText("Ferme les propositions de source lorsqu'un appareil branche "
+                + "sur HDMI 1 est detecte. Une notification XGIMI ouverte pendant "
+                + "la detection pourrait aussi etre fermee. Vous pouvez desactiver "
+                + "cette fonction a tout moment.",
+            14, 0xffbbbbbb);
+
+        addText("HDMI-CEC : si un appareil raccorde a un autre port impose sa "
+                + "source a l'allumage, desactiver uniquement sa fonction "
+                + "'Lecture en une touche' / 'One Touch Play' (nom selon la marque). "
+                + "Conserver HDMI-CEC et ARC/eARC actives.",
+            14, 0xffbbbbbb);
 
         Button toggle = new Button(this);
         toggle.setText(enabled ? "Desactiver HDMI 2 automatique" : "Activer HDMI 2 automatique");
