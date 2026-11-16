@@ -10,7 +10,8 @@ import android.view.accessibility.AccessibilityEvent;
  * Optional startup bootstrap for XGIMI firmware which sets ordinary apps to
  * stopped=true on boot. Opt-in by the device user in Accessibility settings.
  *
- * No accessibility events, screen contents, or gestures are requested.
+ * Popup diagnostic (explicit opt-in only): watches XGIMI window-state metadata.
+ * Never reads window contents, sends keys, or performs accessibility gestures.
  */
 public final class BootAccessibilityService extends AccessibilityService {
     @Override protected void onServiceConnected() {
@@ -33,7 +34,21 @@ public final class BootAccessibilityService extends AccessibilityService {
         }
     }
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
-        // No events are requested or processed.
+        // This is an opt-in, metadata-only diagnostic. No content, text,
+        // view tree, screenshot, key, or gesture is ever accessed.
+        if (event == null
+            || !getSharedPreferences("config", Context.MODE_PRIVATE)
+                .getBoolean("popup_probe", false)
+            || event.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+            || event.getPackageName() == null
+            || !"com.xgimi.xhplayer".contentEquals(event.getPackageName())) {
+            return;
+        }
+        CharSequence cls = event.getClassName();
+        Log.i(HdmiSwitch.TAG, "POPUP_PROBE window_state class="
+            + (cls == null ? "(unknown)" : cls.toString())
+            + " windowId=" + event.getWindowId()
+            + " eventTime=" + event.getEventTime());
     }
     @Override public void onInterrupt() { }
 }
