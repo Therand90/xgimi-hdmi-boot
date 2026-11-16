@@ -5,7 +5,7 @@
 ## Changes
 
 - **Guarded popup dismissal:** after `TvInputManager` detects HDMI1 becoming connected, an accessibility window-state event identifying `com.xgimi.dialog.XGMDialog` within 4 seconds triggers one `GLOBAL_ACTION_BACK`. There is a 15-second cooldown. On-device test confirmed the popup disappeared and HDMI2 stayed visible. Can be switched off in the app.
-- **Faster planned switching:** wake delay now **1 second** (previously 4), full-boot Accessibility bootstrap now **3 seconds** (previously 6). If launching the HDMI2 Activity fails with an exception, a single retry occurs 3 seconds later. **These accelerated delays still require final hardware regression tests before release.**
+- **Faster planned switching:** wake delay now **1 second** (previously 4), full-boot Accessibility bootstrap now **3 seconds** (previously 6). If launching the HDMI2 Activity fails with an exception, a single retry occurs 3 seconds later. Both faster wake and full-reboot switching have now been tested successfully on the Horizon XK03H.
 - **Clean interface:** removed the developer popup-event diagnostic button and logging. Popup handling remains independently configurable.
 - **HDMI-CEC and ARC/eARC preserved:** no changes to Android's global CEC or XGIMI firmware. No root or alternative launcher needed.
 
@@ -38,7 +38,7 @@ See [French instructions](https://github.com/Therand90/xgimi-hdmi-boot/blob/main
 ## Français — nouveautés v1.3
 
 - **Fermeture automatique du popup « Source détectée »** après détection HDMI1 et apparition du dialogue XGIMI (test validé sur le Horizon original, HDMI2 conservé). Fonction désactivable.
-- **Passage plus rapide à HDMI2 :** **1 seconde à la sortie de veille** et **3 secondes après connexion du service au redémarrage complet**, contre 4/6 secondes. **Ces nouveaux délais doivent encore être testés avant publication.**
+- **Passage plus rapide à HDMI2 :** **1 seconde à la sortie de veille** et **3 secondes après connexion du service au redémarrage complet**, contre 4/6 secondes. Les deux nouveaux délais ont été validés sur le Horizon XK03H (sortie de veille et redémarrage complet).
 - **Interface nettoyée :** suppression du diagnostic expérimental, maintien d'un bouton d'activation/désactivation de la fermeture automatique.
 - **Conseil générique HDMI-CEC :** si un équipement HDMI externe impose sa source au démarrage, désactiver **uniquement « Lecture en une touche » / « One Touch Play » (ou équivalent) sur cet équipement**. Garder HDMI-CEC global et ARC/eARC activés. EasyLink / Philips est seulement l'exemple testé.
 - L'accessibilité reste volontaire : événements de fenêtres du lecteur HDMI XGIMI uniquement, sans lecture de l'écran. Exception possible : un autre dialogue XGIMI ouvert juste après la connexion HDMI1 pourrait être fermé.
