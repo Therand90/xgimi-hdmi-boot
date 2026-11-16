@@ -105,6 +105,44 @@ public final class SetupActivity extends Activity {
                 + "ces evenements.", 14, 0xffffbf77);
         }
 
+        final boolean popupAutoclose = getSharedPreferences("config", MODE_PRIVATE)
+            .getBoolean("popup_autoclose", false);
+        addText("Fermeture popup HDMI 1 : "
+                + (popupAutoclose ? "TEST ACTIF" : "DESACTIVEE"),
+            16, popupAutoclose ? 0xffffbf77 : 0xffbbbbbb);
+
+        Button closePopupButton = new Button(this);
+        closePopupButton.setText(popupAutoclose
+            ? "Desactiver la fermeture du popup (test)"
+            : "Tester la fermeture automatique du popup HDMI 1");
+        closePopupButton.setAllCaps(false);
+        closePopupButton.setTextSize(16);
+        closePopupButton.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View view) {
+                boolean next = !getSharedPreferences("config", MODE_PRIVATE)
+                    .getBoolean("popup_autoclose", false);
+                getSharedPreferences("config", MODE_PRIVATE)
+                    .edit().putBoolean("popup_autoclose", next).apply();
+                Toast.makeText(SetupActivity.this,
+                    next ? "Fermeture experimentale activee"
+                         : "Fermeture automatique desactivee",
+                    Toast.LENGTH_SHORT).show();
+                render();
+            }
+        });
+        LinearLayout.LayoutParams closePopupParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT);
+        closePopupParams.topMargin = 8;
+        root.addView(closePopupButton, closePopupParams);
+
+        addText("EXPERIMENTAL : envoie Retour uniquement si le projecteur "
+                + "detecte une connexion HDMI 1 puis ouvre un XGMDialog sous 4 s. "
+                + "Ce type de dialogue est partage par XGIMI : "
+                + "un autre dialogue ouvert au meme moment pourrait etre ferme. "
+                + "Activez cette option uniquement pendant le test.",
+            14, 0xffffbf77);
+
         Button toggle = new Button(this);
         toggle.setText(enabled ? "Desactiver HDMI 2 automatique" : "Activer HDMI 2 automatique");
         toggle.setAllCaps(false);
