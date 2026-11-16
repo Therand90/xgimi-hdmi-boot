@@ -34,8 +34,8 @@ public final class WakeService extends Service {
             @Override public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
                 if (Intent.ACTION_SCREEN_ON.equals(action)) {
-                    Log.i(HdmiSwitch.TAG, "SCREEN_ON recu : HDMI 2 programme dans 4 secondes");
-                    SwitchReceiver.schedule(context, 4000);
+                    Log.i(HdmiSwitch.TAG, "SCREEN_ON recu : HDMI 2 programme dans 8 secondes");
+                    SwitchReceiver.schedule(context, 8000);
                 } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
                     Log.i(HdmiSwitch.TAG, "SCREEN_OFF recu : annulation des commutations en attente");
                     SwitchReceiver.cancel(context);
