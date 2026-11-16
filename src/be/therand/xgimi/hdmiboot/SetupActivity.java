@@ -67,6 +67,44 @@ public final class SetupActivity extends Activity {
                 14, 0xffffbf77);
         }
 
+        final boolean popupProbe = getSharedPreferences("config", MODE_PRIVATE)
+            .getBoolean("popup_probe", false);
+        addText("Diagnostic popup XGIMI : " + (popupProbe ? "ACTIF" : "INACTIF"),
+            16, popupProbe ? 0xff99dd99 : 0xffbbbbbb);
+
+        Button probeButton = new Button(this);
+        probeButton.setText(popupProbe
+            ? "Arreter le diagnostic du popup"
+            : "Activer le diagnostic du popup");
+        probeButton.setAllCaps(false);
+        probeButton.setTextSize(16);
+        probeButton.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View view) {
+                boolean next = !getSharedPreferences("config", MODE_PRIVATE)
+                    .getBoolean("popup_probe", false);
+                getSharedPreferences("config", MODE_PRIVATE)
+                    .edit().putBoolean("popup_probe", next).apply();
+                Toast.makeText(SetupActivity.this,
+                    next ? "Diagnostic actif (logs XgimiHdmiBoot)"
+                         : "Diagnostic arrete",
+                    Toast.LENGTH_SHORT).show();
+                render();
+            }
+        });
+        LinearLayout.LayoutParams probeParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT);
+        probeParams.topMargin = 8;
+        root.addView(probeButton, probeParams);
+        addText("Test facultatif : uniquement les metadonnees des changements de "
+            + "fenetre XGIMI sont journalisees. Aucun texte de l'ecran, aucune "
+            + "capture, aucune touche Retour et aucun geste ne sont utilises.",
+            14, 0xffbbbbbb);
+        if (!bootHelper && popupProbe) {
+            addText("Le service d'accessibilite doit etre active pour collecter "
+                + "ces evenements.", 14, 0xffffbf77);
+        }
+
         Button toggle = new Button(this);
         toggle.setText(enabled ? "Desactiver HDMI 2 automatique" : "Activer HDMI 2 automatique");
         toggle.setAllCaps(false);
