@@ -1,13 +1,13 @@
 # XGIMI HDMI Boot
 
-[English](README.md) · [Dernière version publique stable : v1.2](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.2) · [Code et évolutions v1.3](https://github.com/Therand90/xgimi-hdmi-boot/pull/5)
+[English](README.md) · [Télécharger la v1.3](https://github.com/Therand90/xgimi-hdmi-boot/releases/tag/v1.3)
 
 **Sélection automatique de l'entrée HDMI 2 sur le XGIMI Horizon original**, au démarrage et à la sortie de veille, sans remplacer le launcher Android TV.
 
 ## Fonctionnalités v1.3
 
 - Ouvre l'entrée HDMI 2 native à la sortie de veille ou après un redémarrage complet d'Android TV.
-- **Réduction du délai : 1 seconde à la sortie de veille et 3 secondes après connexion de l'assistant au redémarrage**, contre 4/6 s dans la v1.2. Ces nouveaux délais demandent une validation complète sur le projecteur. Si l'ouverture Android échoue explicitement, une **unique nouvelle tentative 3 secondes plus tard** est prévue.
+- **Réduction du délai : 1 seconde à la sortie de veille et 3 secondes après connexion de l'assistant au redémarrage**, contre 4/6 s dans la v1.2. Les nouveaux délais de veille et de redémarrage complet ont été validés sur le Horizon XK03H. Si l'ouverture Android échoue explicitement, une **unique nouvelle tentative 3 secondes plus tard** est prévue.
 - **Ferme automatiquement le dialogue XGIMI « Source détectée »** dans la situation vérifiée où un appareil raccordé à HDMI 1 devient actif pendant l'affichage HDMI 2. Cette option est activée par défaut sur le modèle testé et reste désactivable dans l'application.
 - Pas de bouton de diagnostic de développement dans l'interface publique.
 - Ne modifie pas les paramètres globaux HDMI-CEC ni ARC/eARC ; aucun root, Tasker ou launcher alternatif.
@@ -34,7 +34,7 @@ Le comportement a été validé sur un **home cinéma Philips avec EasyLink → 
 
 ## Installation — avec la télécommande
 
-1. Pour une installation publique immédiate, [télécharger l'APK v1.2 stable](https://github.com/Therand90/xgimi-hdmi-boot/releases/download/v1.2/XGIMI-HDMI-Boot.apk). La v1.3 sera publiée après validation de ses nouveaux délais.
+1. [Télécharger l'APK officiel v1.3](https://github.com/Therand90/xgimi-hdmi-boot/releases/download/v1.3/XGIMI-HDMI-Boot.apk) et l'installer sur le projecteur.
 2. Ouvrir **XGIMI HDMI Boot** et laisser l'automatisation de HDMI 2 activée. La fermeture du popup possède son propre interrupteur.
 3. **Autoriser l'accessibilité** : `Paramètres → Préférences relatives à l'appareil → Accessibilité → XGIMI HDMI Boot (autostart) → Activer`. Sur le Horizon XK03H, cette permission sert à relancer l'application après redémarrage et, en v1.3, à détecter un événement de fenêtre XGIMI.
 4. **Autoriser la superposition** : `Paramètres → Applications → Accès spécial aux applications → Afficher par-dessus les autres applications → XGIMI HDMI Boot`. L'application propose un bouton d'accès à ce réglage.
@@ -56,7 +56,7 @@ L'accessibilité s'active volontairement sur le projecteur. Une fois configurée
 
 ## Mises à jour et développement
 
-La version publique v1.2 est signée avec la clé originale du projet. La future v1.3 doit utiliser **la même clé** pour mettre à jour les appareils sans désinstallation. Les APK produits par GitHub Actions ne conviennent **pas** à une mise à jour officielle, car ils utilisent une clé temporaire.
+La version publique v1.2 est signée avec la clé originale du projet. La v1.3 utilise **la même clé** pour mettre à jour les appareils sans désinstallation. Les APK produits par GitHub Actions ne conviennent **pas** à une mise à jour officielle, car ils utilisent une clé temporaire.
 
 [Notes v1.3](RELEASE_NOTES_v1.3.md) · [Documentation technique](docs/DEVELOPMENT.md) · [Issues GitHub](https://github.com/Therand90/xgimi-hdmi-boot/issues)
 
