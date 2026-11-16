@@ -33,6 +33,10 @@ public final class SetupActivity extends Activity {
         scroll.addView(root);
         setContentView(scroll);
 
+        // Drop the v1.2 experimental-only diagnostic flag on upgrade.
+        getSharedPreferences("config", MODE_PRIVATE)
+            .edit().remove("popup_probe").apply();
+
         // Opening the app manually also recovers wake listening in v1.x.
         if (isEnabled()) startWakeService();
         render();
@@ -67,64 +71,26 @@ public final class SetupActivity extends Activity {
                 14, 0xffffbf77);
         }
 
-        final boolean popupProbe = getSharedPreferences("config", MODE_PRIVATE)
-            .getBoolean("popup_probe", false);
-        addText("Diagnostic popup XGIMI : " + (popupProbe ? "ACTIF" : "INACTIF"),
-            16, popupProbe ? 0xff99dd99 : 0xffbbbbbb);
-
-        Button probeButton = new Button(this);
-        probeButton.setText(popupProbe
-            ? "Arreter le diagnostic du popup"
-            : "Activer le diagnostic du popup");
-        probeButton.setAllCaps(false);
-        probeButton.setTextSize(16);
-        probeButton.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View view) {
-                boolean next = !getSharedPreferences("config", MODE_PRIVATE)
-                    .getBoolean("popup_probe", false);
-                getSharedPreferences("config", MODE_PRIVATE)
-                    .edit().putBoolean("popup_probe", next).apply();
-                Toast.makeText(SetupActivity.this,
-                    next ? "Diagnostic actif (logs XgimiHdmiBoot)"
-                         : "Diagnostic arrete",
-                    Toast.LENGTH_SHORT).show();
-                render();
-            }
-        });
-        LinearLayout.LayoutParams probeParams = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT);
-        probeParams.topMargin = 8;
-        root.addView(probeButton, probeParams);
-        addText("Test facultatif : uniquement les metadonnees des changements de "
-            + "fenetre XGIMI sont journalisees. Aucun texte de l'ecran, aucune "
-            + "capture, aucune touche Retour et aucun geste ne sont utilises.",
-            14, 0xffbbbbbb);
-        if (!bootHelper && popupProbe) {
-            addText("Le service d'accessibilite doit etre active pour collecter "
-                + "ces evenements.", 14, 0xffffbf77);
-        }
-
         final boolean popupAutoclose = getSharedPreferences("config", MODE_PRIVATE)
-            .getBoolean("popup_autoclose", false);
+            .getBoolean("popup_autoclose", true);
         addText("Fermeture popup HDMI 1 : "
-                + (popupAutoclose ? "TEST ACTIF" : "DESACTIVEE"),
-            16, popupAutoclose ? 0xffffbf77 : 0xffbbbbbb);
+                + (popupAutoclose ? "ACTIVEE" : "DESACTIVEE"),
+            16, popupAutoclose ? 0xff99dd99 : 0xffbbbbbb);
 
         Button closePopupButton = new Button(this);
         closePopupButton.setText(popupAutoclose
-            ? "Desactiver la fermeture du popup (test)"
-            : "Tester la fermeture automatique du popup HDMI 1");
+            ? "Desactiver la fermeture popup HDMI 1"
+            : "Activer la fermeture popup HDMI 1");
         closePopupButton.setAllCaps(false);
         closePopupButton.setTextSize(16);
         closePopupButton.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View view) {
                 boolean next = !getSharedPreferences("config", MODE_PRIVATE)
-                    .getBoolean("popup_autoclose", false);
+                    .getBoolean("popup_autoclose", true);
                 getSharedPreferences("config", MODE_PRIVATE)
                     .edit().putBoolean("popup_autoclose", next).apply();
                 Toast.makeText(SetupActivity.this,
-                    next ? "Fermeture experimentale activee"
+                    next ? "Fermeture popup activee"
                          : "Fermeture automatique desactivee",
                     Toast.LENGTH_SHORT).show();
                 render();
@@ -136,12 +102,17 @@ public final class SetupActivity extends Activity {
         closePopupParams.topMargin = 8;
         root.addView(closePopupButton, closePopupParams);
 
-        addText("EXPERIMENTAL : envoie Retour uniquement si le projecteur "
-                + "detecte une connexion HDMI 1 puis ouvre un XGMDialog sous 4 s. "
-                + "Ce type de dialogue est partage par XGIMI : "
-                + "un autre dialogue ouvert au meme moment pourrait etre ferme. "
-                + "Activez cette option uniquement pendant le test.",
-            14, 0xffffbf77);
+        addText("Ferme les propositions de source lorsqu'un appareil branche "
+                + "sur HDMI 1 est detecte. Une notification XGIMI ouverte pendant "
+                + "la detection pourrait aussi etre fermee. Vous pouvez desactiver "
+                + "cette fonction a tout moment.",
+            14, 0xffbbbbbb);
+
+        addText("HDMI-CEC : si un appareil raccorde a un autre port impose sa "
+                + "source a l'allumage, desactiver uniquement sa fonction "
+                + "'Lecture en une touche' / 'One Touch Play' (nom selon la marque). "
+                + "Conserver HDMI-CEC et ARC/eARC actives.",
+            14, 0xffbbbbbb);
 
         Button toggle = new Button(this);
         toggle.setText(enabled ? "Desactiver HDMI 2 automatique" : "Activer HDMI 2 automatique");
