@@ -11,12 +11,11 @@ import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
 /**
- * Optional XGIMI boot helper and opt-in popup experiment.
+ * XGIMI boot helper and optional guarded HDMI1 source-popup dismissal.
  *
- * The auto-dismiss guard requires BOTH a recent HDMI1 connection callback
- * and the specific Xgimi XGMDialog window-state event. No screen content is
- * read; no accessibility gestures, text, or screenshots are requested.
- * The optional global BACK action remains OFF by default.
+ * Requires BOTH an HDMI1 connection event and an XHPlayer XGMDialog state
+ * change in a short window. No window content, text, or screenshots read.
+ * The user may disable popup dismissal in the app settings.
  */
 public final class BootAccessibilityService extends AccessibilityService {
     private static final String XGIMI_PLAYER = "com.xgimi.xhplayer";
@@ -69,7 +68,7 @@ public final class BootAccessibilityService extends AccessibilityService {
                 @Override public void onInputStateChanged(String inputId, int state) {
                     if (inputId == null || !inputId.contains(HDMI1_MARKER)
                         || state != TvInputManager.INPUT_STATE_CONNECTED) return;
-                    if (!pref("popup_autoclose", false)) return;
+                    if (!pref("enabled", true) || !pref("popup_autoclose", true)) return;
                     lastHdmi1ConnectMs = SystemClock.uptimeMillis();
                     Log.i(HdmiSwitch.TAG,
                         "POPUP_AUTOCLOSE: HDMI1 connected; awaiting XGMDialog for 4s");
@@ -91,14 +90,7 @@ public final class BootAccessibilityService extends AccessibilityService {
             || !XGIMI_PLAYER.contentEquals(event.getPackageName())) return;
 
         CharSequence cls = event.getClassName();
-        if (pref("popup_probe", false)) {
-            Log.i(HdmiSwitch.TAG, "POPUP_PROBE window_state class="
-                + (cls == null ? "(unknown)" : cls.toString())
-                + " windowId=" + event.getWindowId()
-                + " eventTime=" + event.getEventTime());
-        }
-
-        if (!pref("popup_autoclose", false)
+        if (!pref("enabled", true) || !pref("popup_autoclose", true)
             || cls == null || !XGIMI_DIALOG.contentEquals(cls)) return;
         long now = SystemClock.uptimeMillis();
         long elapsed = now - lastHdmi1ConnectMs;
